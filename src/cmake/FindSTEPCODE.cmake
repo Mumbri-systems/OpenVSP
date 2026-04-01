@@ -12,8 +12,8 @@ IF(NOT WIN32)
     ${STEPCODE_INSTALL_DIR}/lib/libbase.a )
 ELSE()
     set( STEPCODE_LIBRARIES
-    ${STEPCODE_INSTALL_DIR}/lib/libexpress.lib
-    ${STEPCODE_INSTALL_DIR}/lib/libexppp.lib
+    ${STEPCODE_INSTALL_DIR}/lib/libexpress-static.lib
+    ${STEPCODE_INSTALL_DIR}/lib/libexppp-static.lib
     ${STEPCODE_INSTALL_DIR}/lib/libsdai_ap203.lib
     ${STEPCODE_INSTALL_DIR}/lib/libstepeditor.lib
     ${STEPCODE_INSTALL_DIR}/lib/libstepcore.lib
