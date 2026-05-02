@@ -10,6 +10,8 @@ IF(NOT WIN32)
     ${STEPCODE_INSTALL_DIR}/lib/libstepdai-static.a
     ${STEPCODE_INSTALL_DIR}/lib/libsteputils-static.a )
 ELSE()
+    # Necessary for static libs in STEPCode
+    add_compile_definitions(SC_STATIC)
     set( STEPCODE_LIBRARIES
     ${STEPCODE_INSTALL_DIR}/lib/express-static.lib
     ${STEPCODE_INSTALL_DIR}/lib/libexppp-static.lib
