@@ -2,20 +2,13 @@
 
 set( STEPCODE_SEARCH_HINTS ${STEPCODE_INSTALL_DIR} )
 
-find_path( STEPCODE_INCLUDE_DIR
-    NAMES stepcore/stepcore.h  # Check for a representative header
-    HINTS ${STEPCODE_SEARCH_HINTS}
-    PATH_SUFFIXES include/stepcode include
-    DOC "STEPCode include directory"
-)
-
 set( STEPCODE_INCLUDE_DIRS
-    ${STEPCODE_INCLUDE_DIR}
-    ${STEPCODE_INCLUDE_DIR}/base
-    ${STEPCODE_INCLUDE_DIR}/clstepcore
-    ${STEPCODE_INCLUDE_DIR}/cldai
-    ${STEPCODE_INCLUDE_DIR}/clutils
-    ${STEPCODE_INCLUDE_DIR}/cleditor
+    ${STEPCODE_INSTALL_DIR}/include/stepcode
+    ${STEPCODE_INSTALL_DIR}/include/stepcode/base
+    ${STEPCODE_INSTALL_DIR}/include/stepcode/clstepcore
+    ${STEPCODE_INSTALL_DIR}/include/stepcode/cldai
+    ${STEPCODE_INSTALL_DIR}/include/stepcode/clutils
+    ${STEPCODE_INSTALL_DIR}/include/stepcode/cleditor
     ${STEPCODE_INSTALL_DIR}/include/schemas/sdai_ap203
 )
 
