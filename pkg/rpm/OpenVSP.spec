@@ -1,11 +1,11 @@
 %global _duplicate_files_terminate_build 0
-%global commit 66374180faffcc72a9a8634fd106b4ab19ce7333
+%global commit 2d818506530b3fc5db6b7cc77d84315f526cf503
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global commitdate 20260422
-%global min_version 3.49.0
+%global commitdate 20260515
+%global min_version 3.50.2
 
 Name:     OpenVSP
-Version:  3.49.0^%{commitdate}git%{shortcommit}
+Version:  3.50.2^%{commitdate}git%{shortcommit}
 Release:  %autorelease
 Summary:  A parametric aircraft geometry tool
 License:  NASA-1.3
