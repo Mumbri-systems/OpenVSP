@@ -143,6 +143,10 @@ enum AUX_GEOM_MODE { AUX_GEOM_ROTOR_TIP_PATH,	/*!< Rotor tip path */
                      AUX_GEOM_THREE_PT_CCE,	/*!< Three contact point composite clearance envelope */
                      AUX_GEOM_SUPER_CONE,	/*!< Super cone (XSecCurve based profile) */
                      AUX_GEOM_SINGLE_GEAR,	/*!< Single (potentially) off nominal gear */
+                     AUX_GEOM_ROTOR_FRAGMENT,	/*!< AC 20-128 A rotor fragment */
+                     AUX_GEOM_THROWN_BLADE,	/*!< AC 25.905-1 thrown blade */
+                     AUX_GEOM_TIRE_SPRAY,	/*!< ESDU 83042a Tire spray pattern */
+                     AUX_GEOM_WHEEL_TIRE_FAILURE,	/*!< AMC 25.734 Wheel and tire failure models */
                      NUM_AUX_GEOM_MODES	/*!< Number of auxiliary geom modes. */
 };
 
@@ -499,7 +503,8 @@ enum ENGINE_MODE_TYPE { ENGINE_MODE_FLOWTHROUGH,	/*!< Represent integrated flowp
 	\ingroup Enumerations
 */
 /*! Enum for OpenVSP API error codes. */
-enum ERROR_CODE {   VSP_OK,	/*!< No error */
+enum ERROR_CODE {   VSP_UNKNOWN = -1,	/*!< Unknown error */
+                    VSP_OK,	/*!< No error */
                     VSP_INVALID_PTR,	/*!< Invalid pointer error */
                     VSP_INVALID_TYPE,	/*!< Invalid type error */
                     VSP_CANT_FIND_TYPE,	/*!< Can't find type error */
@@ -793,6 +798,19 @@ enum FF_W_EQN { FF_W_MANUAL = 0,	/*!< Manual FF equation */
 /*!
 	\ingroup Enumerations
 */
+/*! Enum for AC 20-128A rotor fragment modes. */
+enum FRAGMENT_MODE { ONE_THIRD_ROTOR_FRAGMENT,	/*!< One third rotor fragment */
+                     INTERMEDIATE_FRAGMENT,	/*!< Intermediate rotor fragment */
+                     ALTERNATE_FRAGMENT,	/*!< Alternate rotor fragment model */
+                     FAN_FRAGMENT,	/*!< Fan blade fragment */
+                     SMALL_FRAGMENT,	/*!< Small fragment */
+                     GENERIC_FRAGMENT,	/*!< Generic fragment */
+                     NUM_FRAGMENT_MODES	/*!< Number of auxiliary geom modes. */
+};
+
+/*!
+	\ingroup Enumerations
+*/
 /*! Enum for Parasite Drag Tool freestream unit system. */
 enum FREESTREAM_PD_UNITS { PD_UNITS_IMPERIAL = 0,	/*!< Imperial unit system */
                            PD_UNITS_METRIC	/*!< Metric unit system */
@@ -912,6 +930,11 @@ enum GEOMETRY_ANALYSIS_TYPE { EXTERNAL_INTERFERENCE,	/*!< Interference between m
                               CCE_INTERFERENCE,	/*!< Interference with composite clearance envelope */
                               LINEAR_SWEPT_VOLUME_ANALYSIS,	/*!< Interference with linear swept volume */
                               VISIBLE_AT_SURF_ANALYSIS,	/*!< Calculate visibility of a surface from a direction */
+                              RISK_ANGLE,	/*!< Calculate risk angle for thrown debris */
+                              COMP_GEOM,	/*!< Calculate wetted area and volume */
+                              PLANAR_SLICE,	/*!< Calculate planar slices and area distribution */
+                              PROJ_AREA,	/*!< Calculate projected area */
+                              MASS_PROP,	/*!< Calculate mass properties */
                               NUM_INTERFERENCE_TYPES	/*!< Number of interference check types */
 };
 
@@ -1245,6 +1268,15 @@ enum PROP_AZIMUTH_MODE { PROP_AZI_UNIFORM,	/*!< Propeller blades are uniformly s
 /*!
 	\ingroup Enumerations
 */
+/*! Enum used to identify thrown blade type for AC 25.905-1. */
+enum PROP_BLADE_MODE { PROP_BLADE_TRADITIONAL,	/*!< Traditional straight blades */
+                       PROP_BLADE_NONTRADITIONAL,	/*!< Non-traditional blades */
+                       NUM_PROP_BLADE_MODES,	/*!< Number of propeller blade modes */
+};
+
+/*!
+	\ingroup Enumerations
+*/
 /*! Enum for actuator disk driver parameters. */
 enum PROP_DRIVERS { RPM_PROP_DRIVER,	/*!< RPM driver */
                     CT_PROP_DRIVER,	/*!< Thrust coefficient driver */
@@ -1370,10 +1402,12 @@ enum ROUTE_PT_DELTA_TYPE { ROUTE_PT_DELTA_XYZ,	/*!< Routing point ofset in globa
 	\ingroup Enumerations
 */
 /*! Enum representing the possible ways to scale a 3D background image. */
-enum SCALE_TYPE { SCALE_WIDTH,	/*!< Scale image to match desired width */
-                  SCALE_HEIGHT,	/*!< Scale image to match desired height */
+enum SCALE_TYPE { SCALE_WIDTH,	/*!< Scale image to match desired width with 1:1 AR */
+                  SCALE_HEIGHT,	/*!< Scale image to match desired height with 1:1 AR */
                   SCALE_WIDTH_HEIGHT,	/*!< Scale image to match desired width and height */
                   SCALE_RESOLUTION,	/*!< Scale image to specified resolution */
+                  SCALE_WIDTH_AR,	/*!< Scale image to match desired width with specified AR */
+                  SCALE_HEIGHT_AR,	/*!< Scale image to match desired height with specified AR */
                   NUM_SCALE_TYPES,	/*!< Number of ways to scale 3D background image. */
 };
 
@@ -1635,6 +1669,20 @@ enum VSP_SURF_TYPE { NORMAL_SURF,	/*!< Normal VSP surface */
                      WING_SURF,	/*!< Wing VSP surface */
                      DISK_SURF,	/*!< Disk VSP surface */
                      NUM_SURF_TYPES,	/*!< Number of VSP surface types */
+};
+
+
+/*!
+	\ingroup Enumerations
+*/
+/*! Enum for AMC 25.734 wheel and tire failure models */
+enum WHEEL_TIRE_FAILURE_TYPE { WHEEL_TIRE_1LG,	/*!< Large tire debris */
+                               WHEEL_TIRE_1SM,	/*!< Small tire debris */
+                               WHEEL_TIRE_2,	/*!< Wheel flange debris */
+                               WHEEL_TIRE_3E,	/*!< Flailing tire strip extended */
+                               WHEEL_TIRE_3R,	/*!< Flailing tire strip retracted */
+                               WHEEL_TIRE_4,	/*!< Tire burst pressure (Not implemented)*/
+                               NUM_WHEEL_TIRE_FAILURE_MODES,	/*!< Number of wheel and tire failure modes */
 };
 
 /*!

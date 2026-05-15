@@ -4558,7 +4558,7 @@ map < pair < string, int >, vector < int > > VSPAEROMgrSingleton::GetVSPAEROGeom
             MeshGeom* mesh = dynamic_cast<MeshGeom*>( geom );
             assert( mesh );
 
-            if ( mesh->GetTMeshPtrIDs().size() == ( all_geom_vec.size() - 1 ) )
+            if ( GetTMeshPtrIDs( mesh->m_TMeshVec ).size() == ( all_geom_vec.size() - 1 ) )
             {
                 continue;
             }
@@ -4575,7 +4575,7 @@ map < pair < string, int >, vector < int > > VSPAEROMgrSingleton::GetVSPAEROGeom
             MeshGeom* mesh = dynamic_cast<MeshGeom*>( geom );
             assert( mesh );
 
-            num_surf = mesh->GetNumIndexedParts();
+            num_surf = (int)mesh->m_TMeshVec.size();
         }
         else
         {

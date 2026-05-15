@@ -183,6 +183,7 @@ private:
     CScriptArray* GetDoubleAnalysisInput( const string & analysis, const string & name, int index );
     CScriptArray* GetStringAnalysisInput( const string & analysis, const string & name, int index );
     CScriptArray* GetVec3dAnalysisInput( const string & analysis, const string & name, int index );
+    CScriptArray* GetAllGeometryAnalysesIDVec();
 
     //==== Attribute Calls ====//
     CScriptArray* FindAllAttributes();
@@ -292,6 +293,7 @@ private:
     static void DeleteExcrescence(int index);
 
     CScriptArray* GetFeaStructIDVec();
+    CScriptArray* GetAllFeaPolySparPtIDVec( const string & pspar_id );
     CScriptArray* GetFeaPartIDVec( const std::string & fea_struct_id );
     CScriptArray* GetFeaSubSurfIDVec( const std::string & fea_struct_id );
     CScriptArray* GetFeaBCIDVec( const string & fea_struct_id );

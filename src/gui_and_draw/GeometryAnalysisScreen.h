@@ -67,6 +67,17 @@ protected:
     GroupLayout m_MotionOptionsLayout;
     GroupLayout m_LookAtVisibilityOptionsLayout;
 
+    GroupLayout m_CompGeomLayout;
+
+    GroupLayout m_PlanarSliceLayout;
+
+    GroupLayout m_ProjectionOptionsLayout;
+
+    GroupLayout m_ProjectionSub1Layout;
+    GroupLayout m_ProjectionDirectionLayout;
+
+    GroupLayout m_MassPropLayout;
+
     ColResizeBrowser* m_GeometryAnalysisBrowser;
     int m_GeometryBrowserSelect;
 
@@ -158,10 +169,51 @@ protected:
 
     TriggerButton m_LookAlongButton;
 
+
+    // Comp Geom
+    ToggleButton m_CompGeomHalfMesh;
+    ToggleButton m_CompGeomSubsurfs;
+
+    // Planar Slice
+    Choice m_PlanarDirChoice;
+
+    SliderAdjRangeInput m_PlanarNumSlicesSlider;
+    SliderAdjRangeInput m_PlanarStartLocSlider;
+    SliderAdjRangeInput m_PlanarEndLocSlider;
+
+    ToggleButton m_PlanarAutoButton;
+    ToggleButton m_PlanarMeasureDuctButton;
+
+    // Projection
+    ToggleButton m_TargetHullButton;
+
+    ToggleButton m_BoundaryEnableButton;
+    ToggleButton m_BoundaryHullButton;
+
+    ToggleRadioGroup m_DirectionTypeGroup;
+
+    ToggleButton m_DirectionTypeX;
+    ToggleButton m_DirectionTypeY;
+    ToggleButton m_DirectionTypeZ;
+    ToggleButton m_DirectionTypeGeom;
+    ToggleButton m_DirectionTypeVector;
+
+    SliderAdjRangeInput m_XSlider;
+    SliderAdjRangeInput m_YSlider;
+    SliderAdjRangeInput m_ZSlider;
+
+    GeomPicker m_DirectionGeom;
+
+    // Mass Prop
+    SliderAdjRangeInput m_MassNumSlicesSlider;
+    Choice m_MassDirChoice;
+
+
     TriggerButton m_Evaluate;
     TriggerButton m_ShowResultsViewer;
 
     TriggerButton m_ApplyRotation;
+    TriggerButton m_MakeMeshGeom;
 
     Output m_ResultOutput;
 

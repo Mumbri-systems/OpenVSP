@@ -24,15 +24,17 @@
 #include "BndBox.h"
 #include "XmlUtil.h"
 
-#include <vector>               //jrg windows?? 
+#include <vector>               //jrg windows??
 #include <algorithm>            //jrg windows??
 #include <string>
+#include <set>
 #include <unordered_map>
 #include <deque>
 #include <list>
 
 using std::vector;
 using std::string;
+using std::set;
 using std::unordered_map;
 using std::deque;
 using std::list;
@@ -239,7 +241,7 @@ public:
     {
         m_ParTri = par_tri;
     }
-    virtual TTri* GetParTri()
+    virtual TTri* GetParTri() const
     {
         return m_ParTri;
     }
@@ -438,6 +440,7 @@ public:
     virtual double MinDistanceRay( const vec3d &org, const vec3d &norm, double curr_min_dist, vec3d &p1, vec3d &p2 );
 
     virtual double MinAngle( const vec3d &org, const vec3d &norm, const vec3d& ptaxis, const vec3d& axis, double curr_min_angle, int ccw, vec3d &p1, vec3d &p2 );
+    virtual double MinAngleTri( const vec3d &norm, const vec3d &v0, const vec3d &v1, const vec3d &v2, const vec3d &ptaxis, const vec3d &axis, double curr_min_angle, int ccw, vec3d &p1, vec3d &p2 );
 
     BndBox m_Box;
     vector< TTri* > m_TriVec;
@@ -476,6 +479,7 @@ public:
     double MaxDistanceRay( const vec3d &org, const vec3d &norm, double curr_max_dist, vec3d &p1, vec3d &p2 );
     double MinDistanceRay( const vec3d &org, const vec3d &norm, double curr_min_dist, vec3d &p1, vec3d &p2 );
     double MinAngle( const vec3d &org, const vec3d &norm, const vec3d& ptaxis, const vec3d& axis, double curr_min_angle, int ccw, vec3d &p1, vec3d &p2 );
+    double MinAngleTri( const vec3d &norm, const vec3d &v0, const vec3d &v1, const vec3d &v2, const vec3d &ptaxis, const vec3d &axis, double curr_min_angle, int ccw, vec3d &p1, vec3d &p2 );
     void Split();
 
     void MakeFromPGMesh( PGMesh *m );
@@ -705,6 +709,7 @@ vector< int > GetTMeshCopyIndex( vector<TMesh*> &tmv );
 vector< double > GetTMeshWmins( vector<TMesh*> &tmv );
 vector< double > GetTMeshUscale( vector<TMesh*> &tmv );
 vector< double > GetTMeshWscale( vector<TMesh*> &tmv );
+set< string > GetTMeshPtrIDs( const vector<TMesh*> &tmv );
 void SubTagTris( bool tag_subs, vector<TMesh*> &tmv, const vector < string > & sub_vec = vector < string > () );
 void RefreshTagMaps( vector<TMesh*> &tmv );
 
@@ -714,7 +719,7 @@ bool CheckIntersect( const vector<TMesh*> & tmesh_vec, const vector<TMesh*> & ot
 bool CheckIntersect( const vector<TMesh*> & tmesh_vec, const vec3d &org, const vec3d &norm );
 bool CheckIntersect( Geom* geom_ptr, const vector<TMesh*> & other_tmesh_vec );
 bool CheckSelfIntersect( const vector<TMesh*> & tmesh_vec );
-void DiscreteVisibility( vector < TMesh* > & primary_tmv, const vector < double > &azvec, const vector < double > & elvec, const vector < vec3d > & cen_vec, const string & resid, const vector<string> & cutout_vec );
+void DiscreteVisibility( vector < TMesh* > & primary_tmv, const vector < double > &azvec, const vector < double > & elvec, const vector < vec3d > & cen_vec, vector < TMesh *> &fov_vec, const string & resid, const vector<string> & cutout_vec );
 void LookAtVisibility( TMesh *primary_tm, const vec3d & dir, double n2, const string & resid, vector< TMesh* > & result_tmv );
 void PlaneInterferenceCheck(  TMesh *primary_tm, const vec3d & org, const vec3d & norm, const string & resid, vector< TMesh* > & result_tmv );
 void CCEInterferenceCheck(  TMesh *primary_tm, TMesh *secondary_tm, const string & resid, vector< TMesh* > & result_tmv );
@@ -752,5 +757,96 @@ void MakeThreePts( const vec3d & org, const vec3d & norm, vector <vec3d> &threep
 TMesh* MakeSlice( const vec3d & org, const vec3d & norm, const double & len );
 TMesh* MakeSlice( const int &swdir, const double & len );
 double MakeSlices( vector<TMesh*> &tmv, const BndBox & bbox, int numSlices, int swdir, vector < double > &slicevec, bool mpslice = true, bool tesselate = true, bool autoBounds = true, double start = 0, double end = 0, int slctype = vsp::CFD_STRUCTURE );
+
+double CalcMeshDeviation( TMesh *tm, const vec3d &cen, const vec3d &norm );
+void FitPlaneToMesh( TMesh *tm, vec3d &cen, vec3d &norm );
+TMesh* MakeCutter( TMesh *tm, const vec3d &norm );
+void CutMesh( TMesh *target_tm, TMesh *cutter_tm );
+void TrimTMeshSequence( vector < TMesh* > tmvec );
+void TrimCoplanarPatches( vector < TMesh* > &tmv );
+void MergeCoplanarSplitPatches( vector < TMesh* > &tmv );
+void MergeCoplanarTrimGroups( vector < TMesh* > &tmv );
+void MergeDegenCruciformTMeshes( vector < TMesh* > &tmv );
+void ForceSymmSmallYZero( vector < TMesh* > &tmv );
+TMesh* AddHalfBox( const vector < TMesh* > &tmv, const string &id );
+void IgnoreYLessThan( vector < TMesh* > &tmv, const double &ytol );
+TMesh* GetMeshByID( const vector < TMesh* > &tmv, const string &id );
+
+void DumpMeshes( const vector < TMesh* > &tmv, const string &prefix );
+void CreatePrism( vector< TetraMassProp* >& tetraVec, TTri* tri, double len, int idir );
+
+void BuildTriVec( const TMesh* mesh, vector< TTri* > &trivec );
+void BuildTriVec( const vector< TMesh* > &meshvec, vector< TTri* > &trivec );
+void IndexTriVec( vector< TTri* > &trivec, vector< TNode* > &nodvec );
+void IgnoreDegenTris( vector< TTri* > &trivec );
+void BuildIndexedMesh( const vector< TMesh* > &tmv, const vector< TMesh* > &slicevec,
+                       bool viewMesh, bool viewSlice,
+                       vector< TTri* > &trivec, vector< TNode* > &nodvec );
+
+//=============================================================================
+// Indexed Mesh API
+// These functions operate on a pre-built indexed representation of a mesh
+// (vector<TTri*> + vector<TNode*>).  They may eventually become part of a
+// dedicated IndexedTriMesh class.
+//=============================================================================
+
+void WriteStlByTag( FILE* file_id, int tag, const vector< TTri* > &trivec );
+
+void WriteNascartPnts( FILE* fp, const vector< TNode* > &nodvec, const Matrix4d &xfm );
+void WriteCart3DPnts( FILE* fp, const vector< TNode* > &nodvec, const Matrix4d &xfm );
+void WriteOBJPnts( FILE* fp, const vector< TNode* > &nodvec, const Matrix4d &xfm );
+void WriteVSPGeomPnts( FILE* file_id, const vector< TNode* > &nodvec, const Matrix4d &xfm );
+int  WriteGMshNodes( FILE* fp, int node_offset, const vector< TNode* > &nodvec, const Matrix4d &xfm );
+void WriteFacetNodes( FILE* fp, const vector< TNode* > &nodvec, const Matrix4d &xfm );
+
+int  WriteNascartTris( FILE* fp, int off, const vector< TTri* > &trivec, const vector< TNode* > &nodvec );
+int  WriteCart3DTris( FILE* fp, int off, const vector< TTri* > &trivec, const vector< TNode* > &nodvec );
+int  WriteOBJTris( FILE* fp, int off, const vector< TTri* > &trivec, const vector< TNode* > &nodvec );
+int  WriteVSPGeomTris( FILE* file_id, int offset, const vector< TTri* > &trivec, const vector< TNode* > &nodvec );
+int  WriteVSPGeomAlternateTris( FILE* file_id, int noffset, int &tcount, const vector< TTri* > &trivec, const vector< TNode* > &nodvec );
+int  WriteGMshTris( FILE* fp, int node_offset, int tri_offset, const vector< TTri* > &trivec );
+
+void WriteFacetTriParts( FILE* fp, int &offset, int &tri_count, int &part_count,
+                         const vector< TMesh* > &tmv, const vector< TTri* > &trivec, const vector< TNode* > &nodvec );
+int  WriteNascartParts( FILE* fp, int off, const vector< TMesh* > &tmv );
+int  WriteCart3DParts( FILE* fp, const vector< TTri* > &trivec );
+int  WriteVSPGeomParts( FILE* file_id, const vector< TTri* > &trivec );
+int  WriteVSPGeomAlternateParts( FILE* file_id, int &tcount, const vector< TTri* > &trivec );
+
+int  WriteVSPGeomPartTagTris( FILE* file_id, int tri_offset, int part, int tag, const vector< TTri* > &trivec );
+int  CountVSPGeomPartTagTris( int part, int tag, const vector< TTri* > &trivec );
+void WriteVSPGeomParents( FILE* file_id, int &tcount, const vector< TTri* > &trivec );
+
+void IdentifyWakes( const vector< TTri* > &trivec, vector< deque< TEdge > > &wakes, vector< vector< vec3d > > &polyvec );
+int  WriteVSPGeomWakes( FILE* file_id, int offset, const vector< deque< TEdge > > &wakes, const vector< TNode* > &nodvec );
+
+//=============================================================================
+// Mesh Analysis
+// Standalone versions of MeshGeom's IntersectTrim, AreaSlice, and MassSlice
+// that operate on caller-owned vectors.  MeshGeom's member functions are
+// thin wrappers that handle Geom/Vehicle-specific bookkeeping (scale Parms,
+// export filenames) and then delegate here.
+//=============================================================================
+
+class DegenGeom;
+class Results;
+
+void IntersectTrim( vector<TMesh*> &tmv, vector<TMesh*> &subSurfVec, BndBox &bbox,
+                    bool degen, int intSubsFlag, bool halfFlag, bool deleteopen,
+                    const vector<string> &sub_vec,
+                    Results *res, MeshInfo &info );
+
+void PostIntersectTrim( vector<TMesh*> &tmv, vector<DegenGeom> &degenGeom, bool degen, int intSubsFlag, MeshInfo &info, Results *res );
+
+void AreaSlice( vector<TMesh*> &tmv, vector<TMesh*> &slicevec, const BndBox &bbox,
+                int numSlices, vec3d norm_axis, bool autoBounds, double start, double end,
+                bool measureduct, Results *res );
+
+void MassSlice( vector<TMesh*> &tmv, vector<TMesh*> &slicevec, BndBox &bbox,
+                vector<DegenGeom> &degenGeom, bool degen, int numSlices, int idir,
+                double &totalMass, vec3d &centerOfGrav,
+                vec3d &IxxIyyIzz, vec3d &IxyIxzIyz,
+                const vector<TetraMassProp*> &pointMassVec,
+                Results *res );
 
 #endif

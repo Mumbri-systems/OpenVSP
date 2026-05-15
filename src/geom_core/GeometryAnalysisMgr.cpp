@@ -77,7 +77,38 @@ GeometryAnalysisCase::GeometryAnalysisCase()
     m_Elevation.Init( "Elevation", m_GroupName, this, 0.0, -90, 90 );
     m_N2RefractionIndex.Init( "N2RefractionIndex", m_GroupName, this, 1.0, 0.0, 100 );
 
-    m_GeometryAnalysisType.Init( "IntererenceCheckType", m_GroupName, this, vsp::EXTERNAL_INTERFERENCE, vsp::EXTERNAL_INTERFERENCE, vsp::NUM_INTERFERENCE_TYPES - 1 );
+    // Wetted Area and Volume
+    m_HalfMeshFlag.Init( "HalfMeshFlag", m_GroupName, this, false, false, true );
+
+    m_UseSubSurfFlag.Init( "UseSubSurfFlag", m_GroupName, this, true, false, true );
+
+    // Area Slice and Mass Prop
+    m_NumSlices.Init( "NumSlices", m_GroupName, this, 10, 1, 100 );
+    m_NumSlices.SetDescript( "Number of slices used in computation" );
+
+    m_SliceDir.Init( "SliceDir", m_GroupName, this, vsp::X_DIR, vsp::X_DIR, vsp::Z_DIR );
+    m_SliceDir.SetDescript( "Selects from X,Y,Z Axis for slicing" );
+
+    // Just Area Slice
+    m_AutoBoundsFlag.Init( "AutoBoundsFlag", m_GroupName, this, true, false, true );
+    m_AutoBoundsFlag.SetDescript( "Automatically sets Planar Start and End locations" );
+
+    m_PlanarStartLocation.Init( "PlanarStartLocation", m_GroupName, this, 0, -1e12, 1e12 );
+    m_PlanarStartLocation.SetDescript( "Planar Start Location" );
+
+    m_PlanarEndLocation.Init( "PlanarEndLocation", m_GroupName, this, 10, -1e12, 1e12 );
+    m_PlanarEndLocation.SetDescript( "Planar End Location" );
+
+    m_PlanarMeasureDuct.Init( "MeasureDuctFlag", m_GroupName, this, false, false, true );
+    m_PlanarMeasureDuct.SetDescript( "Flag to measure negative area inside positive areas" );
+
+    // Projected Area
+    m_TargetHullFlag.Init( "TargetHullFlag", m_GroupName, this, false, false, true );
+    m_BoundaryEnableFlag.Init( "BoundaryEnableFlag", m_GroupName, this, false, false, true );
+    m_BoundaryHullFlag.Init( "BoundaryHullFlag", m_GroupName, this, false, false, true );
+    m_DirectionType.Init( "DirectionType", m_GroupName, this, vsp::X_PROJ, vsp::X_PROJ, vsp::NUM_PROJ_DIR_OPTIONS - 1 );
+
+    m_GeometryAnalysisType.Init( "IntererenceCheckType", m_GroupName, this, vsp::COMP_GEOM, vsp::EXTERNAL_INTERFERENCE, vsp::NUM_INTERFERENCE_TYPES - 1 );
 
     m_LastResultValue.Init( "LastResult", m_GroupName, this, 0.0, -1e12, 1e12 );
 }
@@ -93,7 +124,8 @@ void GeometryAnalysisCase::Update()
     if ( m_GeometryAnalysisType() == vsp::PLANE_2PT_ANGLE_INTERFERENCE ||
          m_GeometryAnalysisType() == vsp::PLANE_1PT_ANGLE_INTERFERENCE ||
          m_GeometryAnalysisType() == vsp::GEAR_TURN_ANALYSIS ||
-         m_GeometryAnalysisType() == vsp::CCE_INTERFERENCE )
+         m_GeometryAnalysisType() == vsp::CCE_INTERFERENCE ||
+         m_GeometryAnalysisType() == vsp::RISK_ANGLE )
     {
         m_SecondaryType = vsp::GEOM_TARGET;
     }
@@ -109,6 +141,34 @@ void GeometryAnalysisCase::Update()
     if ( m_SymmRotZ() )
     {
         m_RotZn = -m_RotZp();
+    }
+
+    if ( m_GeometryAnalysisType() == vsp::PROJ_AREA )
+    {
+        vec3d dir = ProjectionMgr.GetDirection( m_DirectionType(), m_DirectionGeomID );
+
+        switch ( m_DirectionType() )
+        {
+            case vsp::X_PROJ:
+            case vsp::Y_PROJ:
+            case vsp::Z_PROJ:
+            case vsp::GEOM_PROJ:
+                m_DispX = dir.x();
+                m_DispY = dir.y();
+                m_DispZ = dir.z();
+                break;
+        }
+    }
+
+    if ( m_AutoBoundsFlag() )
+    {
+        m_PlanarStartLocation.Deactivate();
+        m_PlanarEndLocation.Deactivate();
+    }
+    else
+    {
+        m_PlanarStartLocation.Activate();
+        m_PlanarEndLocation.Activate();
     }
 
     UpdateDrawObj_Live();
@@ -284,6 +344,41 @@ vector< TMesh* > GeometryAnalysisCase::GetPrimaryTMeshVec()
     return tmv;
 }
 
+vector< TetraMassProp* > GeometryAnalysisCase::GetPrimaryTetraMassPropVec()
+{
+    vector< TetraMassProp* > pmv;
+
+    Vehicle *veh = VehicleMgr.GetVehicle();
+    if ( veh )
+    {
+        if ( m_PrimaryType() == vsp::SET_TARGET || m_PrimaryType() == vsp::MODE_TARGET )
+        {
+            int set = vsp::SET_NONE;
+
+            if ( m_PrimaryType() == vsp::SET_TARGET )
+            {
+                set = m_PrimarySet();
+            }
+            else
+            {
+                Mode *m = ModeMgr.GetMode( m_PrimaryModeID );
+                if ( m )
+                {
+                    set = m->m_NormalSet();
+                }
+            }
+
+            pmv = veh->CreateTetraMassPropVec( set );
+        }
+        else if ( m_PrimaryType() == vsp::GEOM_TARGET )
+        {
+            pmv = veh->CreateTetraMassPropVec( m_PrimaryGeomID );
+        }
+    }
+
+    return pmv;
+}
+
 vector< TMesh* > GeometryAnalysisCase::GetSecondaryTMeshVec()
 {
     vector< TMesh* > tmv;
@@ -341,6 +436,45 @@ vector< TMesh* > GeometryAnalysisCase::GetHingeSecondaryTMeshVec()
     }
 
     return tmv;
+}
+
+BndBox GeometryAnalysisCase::GetPrimaryScaleIndependentBBox() const
+{
+    BndBox b;
+
+    Vehicle *veh = VehicleMgr.GetVehicle();
+    if ( veh )
+    {
+        if ( m_PrimaryType() == vsp::SET_TARGET || m_PrimaryType() == vsp::MODE_TARGET )
+        {
+            int set = vsp::SET_NONE;
+
+            if ( m_PrimaryType() == vsp::SET_TARGET )
+            {
+                set = m_PrimarySet();
+            }
+            else
+            {
+                Mode *m = ModeMgr.GetMode( m_PrimaryModeID );
+                if ( m )
+                {
+                    set = m->m_NormalSet();
+                }
+            }
+
+            veh->GetScaleIndependentBBoxSet( set, b );
+        }
+        else if ( m_PrimaryType() == vsp::GEOM_TARGET )
+        {
+            Geom* geom = veh->FindGeom( m_PrimaryGeomID );
+            if ( geom )
+            {
+                b.Update( veh->GetScaleIndependentBndBox() );
+            }
+        }
+    }
+
+    return b;
 }
 
 bool GeometryAnalysisCase::GetPrimaryTwoPtSideContactPtsNormal( vec3d &p1, vec3d &p2, vec3d &normal )
@@ -787,6 +921,26 @@ bool GeometryAnalysisCase::GetSecondaryPtNormalFwdAxleAxis( double thetabogie, v
     return false;
 }
 
+bool GeometryAnalysisCase::GetSecondarySpreadTri( vec3d &pt, vec3d &axis, vector < vec3d > &t, int &flip )
+{
+    Vehicle *veh = VehicleMgr.GetVehicle();
+    if ( veh )
+    {
+        if ( m_SecondaryType() == vsp::GEOM_TARGET )
+        {
+            Geom* geom = veh->FindGeom( m_SecondaryGeomID );
+
+            AuxiliaryGeom* auxiliary_ptr = dynamic_cast< AuxiliaryGeom* >( geom );
+
+            if ( auxiliary_ptr )
+            {
+                return auxiliary_ptr->GetSpreadTri( pt, axis, t, flip );
+            }
+        }
+    }
+    return false;
+}
+
 xmlNodePtr GeometryAnalysisCase::EncodeXml( xmlNodePtr & node )
 {
     xmlNodePtr gcase_node = xmlNewChild( node, NULL, BAD_CAST"GeometryAnalysis", NULL );
@@ -794,6 +948,7 @@ xmlNodePtr GeometryAnalysisCase::EncodeXml( xmlNodePtr & node )
     XmlUtil::AddStringNode( gcase_node, "PrimaryModeID", m_PrimaryModeID );
     XmlUtil::AddStringNode( gcase_node, "PrimaryGeomID", m_PrimaryGeomID );
     XmlUtil::AddStringNode( gcase_node, "SecondaryGeomID", m_SecondaryGeomID );
+    XmlUtil::AddStringNode( gcase_node, "DirectionGeomID", m_DirectionGeomID );
 
     //===== Cutout Subsurfaces ====//
     xmlNodePtr cutoutSS_list_node = xmlNewChild( gcase_node, NULL, ( const xmlChar * )"CutoutSS_List", NULL );
@@ -815,6 +970,7 @@ xmlNodePtr GeometryAnalysisCase::DecodeXml( xmlNodePtr & node )
     m_PrimaryModeID = ParmMgr.RemapID( XmlUtil::FindString( node, "PrimaryModeID", m_PrimaryModeID ) );
     m_PrimaryGeomID = ParmMgr.RemapID( XmlUtil::FindString( node, "PrimaryGeomID", m_PrimaryGeomID ) );
     m_SecondaryGeomID = ParmMgr.RemapID( XmlUtil::FindString( node, "SecondaryGeomID", m_SecondaryGeomID ) );
+    m_DirectionGeomID = ParmMgr.RemapID( XmlUtil::FindString( node, "DirectionGeomID", m_DirectionGeomID ) );
 
     //==== Cutout Subsurfaces ====//
     xmlNodePtr cutoutSS_list_node = XmlUtil::GetNode( node, "CutoutSS_List", 0 );
@@ -848,6 +1004,7 @@ string GeometryAnalysisCase::Evaluate()
     m_LastResult.clear();
 
     DeleteTMeshVec( m_TMeshVec );
+    DeleteTMeshVec( m_SliceTMeshVec );
     m_PtsVec.clear();
 
     Vehicle *veh = VehicleMgr.GetVehicle();
@@ -1275,6 +1432,125 @@ string GeometryAnalysisCase::Evaluate()
                 }
                 break;
             }
+            case vsp::RISK_ANGLE:
+            {
+                Results *res = ResultsMgr.CreateResults( "Risk_Angle", "Thrown debris risk angle analysis." );
+                if( res )
+                {
+                    m_LastResult = res->GetID();
+                    primary_tmv = GetPrimaryTMeshVec();
+
+                    if ( !primary_tmv.empty() )
+                    {
+                        CSGMesh( primary_tmv );
+                        FlattenTMeshVec( primary_tmv );
+                        TMesh *primary_tm = MergeTMeshVec( primary_tmv );
+                        DeleteTMeshVec( primary_tmv );
+                        primary_tm->LoadBndBox();
+
+                        vec3d ptaxis;
+                        vec3d axis;
+                        vector < vec3d > t;
+                        TMesh *tm = new TMesh();
+
+                        int flip;
+                        if ( GetSecondarySpreadTri( ptaxis, axis, t, flip ) )
+                        {
+                            vector < double > ang;
+                            vector < int > offset;
+
+                            for ( int it = 0; it < 2; it++ )
+                            {
+                                int ioffset = it * 3;
+                                vec3d &v0 = t[0 + ioffset];
+                                vec3d &v1 = t[1 + ioffset];
+                                vec3d &v2 = t[2 + ioffset];
+
+                                vec3d norm = cross( v1 - v0, v2 - v0 );
+                                norm.normalize();
+
+                                vector < int > ccwvec = {1, -1};
+                                for ( int idir = 0; idir < ccwvec.size(); idir++ )
+                                {
+                                    int ccw = ccwvec[ idir ];
+
+                                    vec3d p1, p2;
+
+                                    double theta = ccw * primary_tm->MinAngleTri( norm, v0, v1, v2, ptaxis, axis, std::numeric_limits<double>::quiet_NaN(), ccw, p1, p2 );
+
+                                    if ( !std::isnan( theta ) )
+                                    {
+                                        vec3d r0 = ptaxis + RotateArbAxis( v0 - ptaxis, -theta, axis );
+                                        vec3d r1 = ptaxis + RotateArbAxis( v1 - ptaxis, -theta, axis );
+                                        vec3d r2 = ptaxis + RotateArbAxis( v2 - ptaxis, -theta, axis );
+                                        tm->AddTri( r0, r1, r2, 0 );
+
+                                        ang.push_back( clampCyclic( -flip * theta , 0.0, 2.0 * M_PI ) );
+
+                                        offset.push_back( ioffset );
+                                    }
+                                }
+                            }
+
+                            if ( ang.empty() )
+                            {
+                                res->Add( new NameValData( "Result", 0.0, "Risk angle" ) );
+                            }
+                            else
+                            {
+                                vector < double > angs = ang;
+                                std::sort( angs.begin(), angs.end(), angle_less );
+
+                                double th1 = angs.front();
+                                double th2 = angs.back();
+                                double dth = std::remainder( th2 - th1, 2.0 * M_PI );
+
+                                vector < double > keep = { th1, th2 };
+
+                                for ( int i = 0; i < ang.size(); i++ )
+                                {
+                                    if ( !vector_contains_val( keep, ang[i] ) )
+                                    {
+                                        tm->m_TVec[i]->m_IgnoreTriFlag = true;
+                                    }
+                                }
+                                tm->FlattenInPlace();
+
+                                vector < double > startend = { th1 * 180.0 / M_PI, th2 * 180.0 / M_PI };
+                                res->Add( new NameValData( "StartEnd", startend, "Release angle to contact start and end." ) );
+
+                                res->Add( new NameValData( "Result", dth * 180.0 / M_PI, "Risk angle" ) );
+                                m_TMeshVec.push_back( tm );
+                            }
+
+                            m_TMeshVec.push_back( tm );
+                        }
+                        else
+                        {
+                            MessageData errMsgData;
+                            errMsgData.m_String = "Error";
+                            errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                            char buf[255];
+                            snprintf( buf, sizeof( buf ), "Error:  Wrong geom type in %s.", m_Name.c_str() );
+                            errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                            MessageMgr::getInstance().SendAll( errMsgData );
+                        }
+                    }
+                    else
+                    {
+                        MessageData errMsgData;
+                        errMsgData.m_String = "Error";
+                        errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                        char buf[255];
+                        snprintf( buf, sizeof( buf ), "Error:  Empty primary mesh in %s.", m_Name.c_str() );
+                        errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                        MessageMgr::getInstance().SendAll( errMsgData );
+                    }
+                }
+                break;
+            }
             case vsp::GEAR_CG_TIPBACK_ANALYSIS:
             {
                 Results *res = ResultsMgr.CreateResults( "Gear_CG_Tipback", "Gear / CG tipback angle analysis." );
@@ -1616,7 +1892,7 @@ string GeometryAnalysisCase::Evaluate()
                                         elvec.push_back( m_VizElevationVec[i]->Get() );
                                     }
 
-                                    DiscreteVisibility( primary_tmv, azvec, elvec, cen_vec, m_LastResult, m_CutoutVec );
+                                    DiscreteVisibility( primary_tmv, azvec, elvec, cen_vec, fov_vec, m_LastResult, m_CutoutVec );
                                 }
                             }
                             else
@@ -1773,6 +2049,255 @@ string GeometryAnalysisCase::Evaluate()
                         vec3d dir = ToCartesian( vec3d( 1, -m_Azimuth() * M_PI / 180.0, -m_Elevation() * M_PI / 180.0 ) );
 
                         LookAtVisibility( primary_tm, dir, m_N2RefractionIndex(), m_LastResult, m_TMeshVec );
+                    }
+                }
+                else
+                {
+                    MessageData errMsgData;
+                    errMsgData.m_String = "Error";
+                    errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                    char buf[255];
+                    snprintf( buf, sizeof( buf ), "Error:  Empty primary mesh in %s.", m_Name.c_str() );
+                    errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                    MessageMgr::getInstance().SendAll( errMsgData );
+                }
+                break;
+            }
+            case vsp::COMP_GEOM:
+            {
+                primary_tmv = GetPrimaryTMeshVec();
+
+                if ( !primary_tmv.empty() )
+                {
+                    Results* res = ResultsMgr.CreateResults( "WetArea_Volume", "Calculate wetted area and volume of geometry." );
+                    if( res )
+                    {
+                        m_LastResult = res->GetID();
+
+                        // Hold MeshInfo for communication from IntersectTrim to PostIntersectTrim
+                        MeshInfo info;
+
+                        // Mesh BBox output for scaling.
+                        BndBox bbox;
+
+                        // Debugging subsurface mesh output.
+                        vector < TMesh* > subSurfVec;
+
+                        // SubSurface whitelist.  Empty to allow all.
+                        const vector < string > sub_vec;
+
+
+                        IntersectTrim( primary_tmv, subSurfVec, bbox,
+                                       /*degen*/ false, /* intSubsFlag */ m_UseSubSurfFlag(), /* halfFlag */ m_HalfMeshFlag(), /*deleteopen*/ false,
+                                       sub_vec, res, info );
+
+                        // Dummy to hold output DegenGeom, not used since 'degen' is false
+                        vector< DegenGeom > dg;
+
+                        PostIntersectTrim( primary_tmv, dg, /*degen*/ false, /* intSubsFlag */ m_UseSubSurfFlag(), info, res );
+
+                        vector < double > wetareavec = ResultsMgr.GetDoubleResults( m_LastResult, "Total_Wet_Area", 0 );
+                        if ( wetareavec.size() == 1 )
+                        {
+                            res->Add( new NameValData( "Result", wetareavec[ 0 ], "Wetted area result" ) );
+                        }
+
+                        m_TMeshVec = CopyTMeshVec( primary_tmv );
+
+                        // Delete subsurface debugging meshes
+                        DeleteTMeshVec(  subSurfVec );
+                    }
+                }
+                else
+                {
+                    MessageData errMsgData;
+                    errMsgData.m_String = "Error";
+                    errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                    char buf[255];
+                    snprintf( buf, sizeof( buf ), "Error:  Empty primary mesh in %s.", m_Name.c_str() );
+                    errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                    MessageMgr::getInstance().SendAll( errMsgData );
+                }
+                break;
+            }
+            case vsp::PLANAR_SLICE:
+            {
+                primary_tmv = GetPrimaryTMeshVec();
+
+                if ( !primary_tmv.empty() )
+                {
+                    Results* res = ResultsMgr.CreateResults( "Planar_Slice", "Calculate planar slices and area distribution of geometry." );
+                    if( res )
+                    {
+                        m_LastResult = res->GetID();
+
+                        vector<TMesh*> slicevec;
+
+                        BndBox bbox = GetPrimaryScaleIndependentBBox();
+
+                        vec3d norm_axis;
+                        norm_axis[ m_SliceDir.Get() ] = 1;
+
+                        AreaSlice( primary_tmv, slicevec, bbox, m_NumSlices(), norm_axis, m_AutoBoundsFlag(), m_PlanarStartLocation(), m_PlanarEndLocation(), m_PlanarMeasureDuct(), res );
+
+                        m_TMeshVec = CopyTMeshVec( primary_tmv );
+                        FlattenTMeshVec( m_TMeshVec );
+
+                        m_SliceTMeshVec = slicevec;
+                        FlattenTMeshVec( m_SliceTMeshVec );
+
+                        vector < double > avec = ResultsMgr.GetDoubleResults( m_LastResult, "Slice_Area", 0 );
+                        double maxarea = 0;
+                        for ( int i = 0; i < avec.size(); i++ )
+                        {
+                            if ( avec[ i ] > maxarea )
+                            {
+                                maxarea = avec[ i ];
+                            }
+                        }
+                        res->Add( new NameValData( "Result", maxarea, "Planar slice result" ) );
+                    }
+                }
+                else
+                {
+                    MessageData errMsgData;
+                    errMsgData.m_String = "Error";
+                    errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                    char buf[255];
+                    snprintf( buf, sizeof( buf ), "Error:  Empty primary mesh in %s.", m_Name.c_str() );
+                    errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                    MessageMgr::getInstance().SendAll( errMsgData );
+                }
+                break;
+            }
+            case vsp::PROJ_AREA:
+            {
+                primary_tmv = GetPrimaryTMeshVec();
+
+                if ( !primary_tmv.empty() )
+                {
+                    Results *res = ResultsMgr.CreateResults( "Projected_Area", "Projected area calculation." );
+                    if ( res )
+                    {
+                        m_LastResult = res->GetID();
+
+                        vec3d dir = vec3d( m_DispX(), m_DispY(), m_DispZ() );
+                        vector < vector < vec3d > > solutionPolyVec3d;
+
+                        if ( m_BoundaryEnableFlag() )
+                        {
+                            secondary_tmv = GetSecondaryTMeshVec();
+
+                            if ( !secondary_tmv.empty() )
+                            {
+                                // Do bounded projected area calculations
+                                if ( m_TargetHullFlag() )
+                                {
+                                    TMesh *tm = MakeConvexHull( primary_tmv );
+                                    DeleteTMeshVec( primary_tmv );
+                                    primary_tmv.push_back( tm );
+                                }
+
+                                if ( m_BoundaryHullFlag() )
+                                {
+                                    TMesh *tm = MakeConvexHull( secondary_tmv );
+                                    DeleteTMeshVec( secondary_tmv );
+                                    secondary_tmv.push_back( tm );
+                                }
+
+                                ProjectionMgr.Project( primary_tmv, secondary_tmv, dir, res, m_TMeshVec, solutionPolyVec3d  );
+                            }
+                            else
+                            {
+                                MessageData errMsgData;
+                                errMsgData.m_String = "Error";
+                                errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                                char buf[255];
+                                snprintf( buf, sizeof( buf ), "Error:  Empty secondary mesh in %s.", m_Name.c_str() );
+                                errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                                MessageMgr::getInstance().SendAll( errMsgData );
+                            }
+                        }
+                        else
+                        {
+                            // Do unbounded projected area calculations
+
+                            if ( m_TargetHullFlag() )
+                            {
+                                TMesh *tm = MakeConvexHull( primary_tmv );
+                                DeleteTMeshVec( primary_tmv );
+                                primary_tmv.push_back( tm );
+                            }
+
+                            ProjectionMgr.Project( primary_tmv, dir, res, m_TMeshVec, solutionPolyVec3d  );
+                        }
+
+                        vector < double > avec = ResultsMgr.GetDoubleResults( m_LastResult, "Area", 0 );
+                        if ( avec.size() == 1 )
+                        {
+                            res->Add( new NameValData( "Result", avec[ 0 ], "Projected area result" ) );
+                        }
+
+                        // Convert solutionPolyVec3d from vector of VSP_LINE_STRIP to VSP_LINES
+                        for ( int i = 0; i < solutionPolyVec3d.size(); i++ )
+                        {
+                            for ( int k = 0; k < solutionPolyVec3d[i].size() - 1; k++ )
+                            {
+                                m_PtsVec.push_back( solutionPolyVec3d[ i ][ k ] );
+                                m_PtsVec.push_back( solutionPolyVec3d[ i ][ k + 1 ] );
+                            }
+                        }
+
+                    }
+                }
+                else
+                {
+                    MessageData errMsgData;
+                    errMsgData.m_String = "Error";
+                    errMsgData.m_IntVec.push_back( vsp::VSP_WRONG_GEOM_TYPE );
+                    char buf[255];
+                    snprintf( buf, sizeof( buf ), "Error:  Empty primary mesh in %s.", m_Name.c_str() );
+                    errMsgData.m_StringVec.emplace_back( string( buf ) );
+
+                    MessageMgr::getInstance().SendAll( errMsgData );
+                }
+                break;
+            }
+            case vsp::MASS_PROP:
+            {
+
+                primary_tmv = GetPrimaryTMeshVec();
+
+                if ( !primary_tmv.empty() )
+                {
+                    Results* res = ResultsMgr.CreateResults( "Mass_Properties", "Calculate mass properties of geometry." );
+                    if( res )
+                    {
+                        m_LastResult = res->GetID();
+
+                        vector<TMesh*> slicevec;
+                        BndBox bbox;
+                        vector<DegenGeom> dg;
+
+                        double totalMass;
+                        vec3d centerOfGrav;
+                        vec3d IxxIyyIzz;
+                        vec3d IxyIxzIyz;
+
+                        vector < TetraMassProp* > pointMassVec = GetPrimaryTetraMassPropVec();
+
+                        // This will clean up pointMassVec
+                        MassSlice( primary_tmv, slicevec, bbox, dg, /*degen*/ false, m_NumSlices(), m_SliceDir(), totalMass, centerOfGrav, IxxIyyIzz, IxyIxzIyz, pointMassVec, res );
+
+                        m_TMeshVec = CopyTMeshVec( primary_tmv );
+                        FlattenTMeshVec( m_TMeshVec );
+
+                        m_SliceTMeshVec = slicevec;
+                        FlattenTMeshVec( m_SliceTMeshVec );
                     }
                 }
                 else
@@ -1961,65 +2486,82 @@ void GeometryAnalysisCase::ShowOnlySecondary()
     }
 }
 
-void GeometryAnalysisCase::UpdateDrawObj_PostAnalysis()
+void GeometryAnalysisCase::AssignTMeshDO( TMesh *tm, const Material & mat, const vec3d & color, int indx )
 {
-    Material redmat;
-    redmat.SetMaterial( "Red Default" );
-    redmat.m_Diff[3] = 0.25; // Make translucent
+    unsigned int num_tris = tm->m_TVec.size();
 
-    vector < Material > matvec( m_TMeshVec.size(), redmat );
-    vector < vec3d > colorvec( m_TMeshVec.size(), DrawObj::Color( DrawObj::RED ) );
-
-    if ( m_TMeshVec.size() > 0 &&
-         ( m_GeometryAnalysisType() == vsp::LINEAR_SWEPT_VOLUME_ANALYSIS ||
-           m_GeometryAnalysisType() == vsp::VISIBLE_AT_SURF_ANALYSIS ) )
+    unsigned int pi = 0;
+    vector<TTri*>& tris = tm->m_TVec;
+    m_MeshResultDO_vec[indx].m_PntVec.resize( num_tris * 3 );
+    m_MeshResultDO_vec[indx].m_NormVec.resize( num_tris * 3 );
+    for ( int t = 0 ; t < ( int ) num_tris ; t++ )
     {
-        matvec[0].SetMaterialToDefault();
-        matvec[0].m_Diff[3] = 0.25; // Make translucent
-
-        colorvec[0] = DrawObj::Color( DrawObj::GRAY );
+        m_MeshResultDO_vec[indx].m_PntVec[pi] = tris[t]->m_N0->m_Pnt;
+        m_MeshResultDO_vec[indx].m_PntVec[pi + 1] = tris[t]->m_N1->m_Pnt;
+        m_MeshResultDO_vec[indx].m_PntVec[pi + 2] = tris[t]->m_N2->m_Pnt;
+        m_MeshResultDO_vec[indx].m_NormVec[pi] = tris[t]->m_Norm;
+        m_MeshResultDO_vec[indx].m_NormVec[pi + 1] = tris[t]->m_Norm;
+        m_MeshResultDO_vec[indx].m_NormVec[pi + 2] = tris[t]->m_Norm;
+        pi += 3;
     }
 
-    m_MeshResultDO_vec.resize( m_TMeshVec.size(), DrawObj() );
+    // Flag the DrawObjects as changed
+    m_MeshResultDO_vec[indx].m_GeomChanged = true;
+
+    for ( int j = 0; j < 4; j++ )
+    {
+        m_MeshResultDO_vec[indx].m_MaterialInfo.Ambient[j] = (float)mat.m_Ambi[j];
+        m_MeshResultDO_vec[indx].m_MaterialInfo.Diffuse[j] = (float)mat.m_Diff[j];
+        m_MeshResultDO_vec[indx].m_MaterialInfo.Specular[j] = (float)mat.m_Spec[j];
+        m_MeshResultDO_vec[indx].m_MaterialInfo.Emission[j] = (float)mat.m_Emis[j];
+    }
+    m_MeshResultDO_vec[indx].m_MaterialInfo.Shininess = (float)mat.m_Shininess;
+
+    m_MeshResultDO_vec[indx].m_LineColor = color;
+
+    char str[255];
+    snprintf( str, sizeof( str ),  "_%d", indx );
+    m_MeshResultDO_vec[indx].m_GeomID = m_ID + str;
+    m_MeshResultDO_vec[indx].m_Screen = DrawObj::VSP_MAIN_SCREEN;
+    m_MeshResultDO_vec[indx].m_Type = DrawObj::VSP_WIRE_SHADED_TRIS;
+}
+
+void GeometryAnalysisCase::UpdateDrawObj_PostAnalysis()
+{
+    m_MeshResultDO_vec.resize( m_TMeshVec.size() + m_SliceTMeshVec.size(), DrawObj() );
 
     for ( int i = 0 ; i < ( int )m_TMeshVec.size() ; i++ )
     {
-        unsigned int num_tris = m_TMeshVec[i]->m_TVec.size();
+        Material mat;
+        mat.SetMaterial( "Red Default" );
+        mat.m_Diff[3] = 0.25; // Make translucent
 
-        unsigned int pi = 0;
-        vector<TTri*>& tris = m_TMeshVec[i]->m_TVec;
-        m_MeshResultDO_vec[i].m_PntVec.resize( num_tris * 3 );
-        m_MeshResultDO_vec[i].m_NormVec.resize( num_tris * 3 );
-        for ( int t = 0 ; t < ( int ) num_tris ; t++ )
+        vec3d color = DrawObj::Color( DrawObj::RED );
+
+        if ( ( i == 0 && m_GeometryAnalysisType() == vsp::LINEAR_SWEPT_VOLUME_ANALYSIS ) ||
+             m_GeometryAnalysisType() == vsp::VISIBLE_AT_SURF_ANALYSIS ||
+             m_GeometryAnalysisType() == vsp::COMP_GEOM ||
+             m_GeometryAnalysisType() == vsp::PLANAR_SLICE ||
+             m_GeometryAnalysisType() == vsp::PROJ_AREA ||
+             m_GeometryAnalysisType() == vsp::MASS_PROP )
         {
-            m_MeshResultDO_vec[i].m_PntVec[pi] = tris[t]->m_N0->m_Pnt;
-            m_MeshResultDO_vec[i].m_PntVec[pi + 1] = tris[t]->m_N1->m_Pnt;
-            m_MeshResultDO_vec[i].m_PntVec[pi + 2] = tris[t]->m_N2->m_Pnt;
-            m_MeshResultDO_vec[i].m_NormVec[pi] = tris[t]->m_Norm;
-            m_MeshResultDO_vec[i].m_NormVec[pi + 1] = tris[t]->m_Norm;
-            m_MeshResultDO_vec[i].m_NormVec[pi + 2] = tris[t]->m_Norm;
-            pi += 3;
+            mat.SetMaterialToDefault();
+            mat.m_Diff[3] = 0.25; // Make translucent
+
+            color = DrawObj::Color( DrawObj::GRAY );
         }
 
-        // Flag the DrawObjects as changed
-        m_MeshResultDO_vec[i].m_GeomChanged = true;
+        AssignTMeshDO( m_TMeshVec[i], mat, color, i );
+    }
 
-        for ( int j = 0; j < 4; j++ )
-        {
-            m_MeshResultDO_vec[i].m_MaterialInfo.Ambient[j] = (float)matvec[i].m_Ambi[j];
-            m_MeshResultDO_vec[i].m_MaterialInfo.Diffuse[j] = (float)matvec[i].m_Diff[j];
-            m_MeshResultDO_vec[i].m_MaterialInfo.Specular[j] = (float)matvec[i].m_Spec[j];
-            m_MeshResultDO_vec[i].m_MaterialInfo.Emission[j] = (float)matvec[i].m_Emis[j];
-        }
-        m_MeshResultDO_vec[i].m_MaterialInfo.Shininess = (float)matvec[i].m_Shininess;
+    for ( int i = 0 ; i < ( int )m_SliceTMeshVec.size() ; i++ )
+    {
+        Material mat;
+        mat.SetMaterial( "Blue Default" );
+        mat.m_Diff[3] = 0.25; // Make translucent
+        vec3d color = DrawObj::Color( DrawObj::BLUE );
 
-        m_MeshResultDO_vec[i].m_LineColor = colorvec[ i ];
-
-        char str[255];
-        snprintf( str, sizeof( str ),  "_%d", i );
-        m_MeshResultDO_vec[i].m_GeomID = m_ID + str;
-        m_MeshResultDO_vec[i].m_Screen = DrawObj::VSP_MAIN_SCREEN;
-        m_MeshResultDO_vec[i].m_Type = DrawObj::VSP_WIRE_SHADED_TRIS;
+        AssignTMeshDO( m_SliceTMeshVec[i], mat, color, m_TMeshVec.size() + i );
     }
 
     m_LineResultDO.m_GeomID = m_ID + "Line";
@@ -2073,6 +2615,32 @@ void GeometryAnalysisCase::LoadDrawObjs( vector< DrawObj* > & draw_obj_vec )
     {
         m_SecondaryVizPointDO.m_Visible = false;
     }
+}
+
+string GeometryAnalysisCase::MakeMeshGeom()
+{
+    Vehicle* vehiclePtr = VehicleMgr.GetVehicle();
+
+    GeomType type = GeomType( MESH_GEOM_TYPE, "MESH", true );
+    string id = vehiclePtr->AddGeom( type );
+    Geom *geom_ptr = vehiclePtr->FindGeom( id );
+    if ( geom_ptr )
+    {
+        MeshGeom* mesh_geom = ( MeshGeom* )( geom_ptr );
+
+        // mesh_geom->m_PolyVec = solutionPolyVec3d;
+        mesh_geom->m_PolyVec.push_back( m_PtsVec );
+
+        mesh_geom->m_TMeshVec = CopyTMeshVec( m_TMeshVec );
+        mesh_geom->m_SliceVec = CopyTMeshVec( m_SliceTMeshVec );
+
+        mesh_geom->m_SurfDirty = true;
+        mesh_geom->Update();
+
+        vehiclePtr->SetActiveGeom( id );
+
+    }
+    return id;
 }
 
 //===============================================================================//
@@ -2253,4 +2821,15 @@ int GeometryAnalysisMgrSingleton::GetGeometryAnalysisIndex( const string &id ) c
     }
 
     return -1;
+}
+
+vector < string > GeometryAnalysisMgrSingleton::GetAllGeometryAnalysesIDVec() const
+{
+    vector < string > ret( m_GeometryAnalysisVec.size() );
+
+    for ( int i = 0; i < (int)m_GeometryAnalysisVec.size(); i++ )
+    {
+        ret[i] = m_GeometryAnalysisVec[i]->GetID();
+    }
+    return ret;
 }

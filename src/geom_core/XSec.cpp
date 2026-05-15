@@ -1935,12 +1935,24 @@ StackXSec::StackXSec( XSecCurve *xsc ) : SkinXSec( xsc)
     m_AftCluster.Init( "AftCluster", m_GroupName, this, 1.0, 1e-4, 10.0 );
     m_AftCluster.SetDescript( "Aft Tess Cluster Control" );
 
+    m_VAlign.Init( "VAlign", m_GroupName, this, 0.0, -10.0, 10.0 );
+    m_VAlign.SetDescript( "Vertical alignment of cross section" );
+
     m_XDelta.Init( "XDelta", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
     m_XDelta.SetDescript( "X distance of cross section from prior cross section" );
     m_YDelta.Init( "YDelta", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
     m_YDelta.SetDescript( "Y distance of cross section from prior cross section" );
     m_ZDelta.Init( "ZDelta", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
     m_ZDelta.SetDescript( "Z distance of cross section from prior cross section" );
+
+    m_XSAbsRelFlag.Init( "XSAbsRelFlag", m_GroupName, this, vsp::REL, vsp::ABS, vsp::REL );
+
+    m_XAbs.Init( "XAbs", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
+    m_XAbs.SetDescript( "Absolute X position of cross section" );
+    m_YAbs.Init( "YAbs", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
+    m_YAbs.SetDescript( "Absolute Y position of cross section" );
+    m_ZAbs.Init( "ZAbs", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
+    m_ZAbs.SetDescript( "Absolute Z position of cross section" );
 
     m_XRotate.Init( "XRotate", m_GroupName, this,  0.0, -180.0, 180.0 );
     m_XRotate.SetDescript( "Rotation about x-axis of cross section" );
@@ -1949,12 +1961,12 @@ StackXSec::StackXSec( XSecCurve *xsc ) : SkinXSec( xsc)
     m_ZRotate.Init( "ZRotate", m_GroupName, this,  0.0, -180.0, 180.0 );
     m_ZRotate.SetDescript( "Rotation about z-axis of cross section" );
 
-    m_XCenterRot.Init( "m_XCenterRot", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
-    m_XCenterRot.SetDescript( "X Center Of Rotation" );
-    m_YCenterRot.Init( "m_YCenterRot", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
-    m_YCenterRot.SetDescript( "Y Center Of Rotation" );
-    m_ZCenterRot.Init( "m_ZCenterRot", m_GroupName, this,  0.0, -1.0e12, 1.0e12 );
-    m_ZCenterRot.SetDescript( "Z Center Of Rotation" );
+    m_XRotateAbs.Init( "XRotateAbs", m_GroupName, this,  0.0, -180.0, 180.0 );
+    m_XRotateAbs.SetDescript( "Absolute rotation about x-axis of cross section" );
+    m_YRotateAbs.Init( "YRotateAbs", m_GroupName, this,  0.0, -180.0, 180.0 );
+    m_YRotateAbs.SetDescript( "Absolute rotation about y-axis of cross section" );
+    m_ZRotateAbs.Init( "ZRotateAbs", m_GroupName, this,  0.0, -180.0, 180.0 );
+    m_ZRotateAbs.SetDescript( "Absolute rotation about z-axis of cross section" );
 
     m_Spin.Init( "Spin", m_GroupName, this, 0.0, -1.0, 1.0 );
     m_Spin.SetDescript( "Shift curve parameterization" );
@@ -1975,6 +1987,45 @@ void StackXSec::SetScale( double scale )
 //==== Update ====//
 void StackXSec::Update()
 {
+    // Deactivate non driving parms and Activate driving parms
+    if ( m_XSAbsRelFlag() ==  vsp::REL  )
+    {
+        m_XAbs.Deactivate();
+        m_YAbs.Deactivate();
+        m_ZAbs.Deactivate();
+
+        m_XDelta.Activate();
+        m_YDelta.Activate();
+        m_ZDelta.Activate();
+
+        m_XRotateAbs.Deactivate();
+        m_YRotateAbs.Deactivate();
+        m_ZRotateAbs.Deactivate();
+
+        m_XRotate.Activate();
+        m_YRotate.Activate();
+        m_ZRotate.Activate();
+    }
+    else
+    {
+        m_XDelta.Deactivate();
+        m_YDelta.Deactivate();
+        m_ZDelta.Deactivate();
+
+        m_XAbs.Activate();
+        m_YAbs.Activate();
+        m_ZAbs.Activate();
+
+        m_XRotate.Deactivate();
+        m_YRotate.Deactivate();
+        m_ZRotate.Deactivate();
+
+        m_XRotateAbs.Activate();
+        m_YRotateAbs.Activate();
+        m_ZRotateAbs.Activate();
+    }
+
+
     m_LateUpdateFlag = false;
 
     XSecSurf* xsecsurf = (XSecSurf*) GetParentContainerPtr();
@@ -1987,6 +2038,11 @@ void StackXSec::Update()
 
     VspCurve baseCurve = GetUntransformedCurve();
 
+    // This is really a Z translation for the Stack, but it is applied before the
+    // BasicTransformation is applied.  Consequently, it is a y transformation
+    // (to the untransformed curve).
+    mat.translatef( 0, -m_VAlign() * 0.5 * m_XSCurve->GetHeight(), 0 );
+
     baseCurve.Transform( mat );
 
     //==== Apply Transform ====//
@@ -1996,30 +2052,70 @@ void StackXSec::Update()
 
     m_Transform.loadIdentity();
 
-    if( indx > 0 )
+    if ( m_XSAbsRelFlag() ==  vsp::REL  )
     {
-        StackXSec* prevxs = (StackXSec*) xsecsurf->FindXSec( indx - 1);
-        if( prevxs )
+
+        if( indx > 0 )
         {
-            m_Transform.matMult( prevxs->GetTransform()->data() );
+            StackXSec* prevxs = (StackXSec*) xsecsurf->FindXSec( indx - 1);
+            if( prevxs )
+            {
+                m_Transform.matMult( prevxs->GetTransform()->data() );
+            }
         }
+
+        m_Transform.translatef( m_XDelta(), m_YDelta(), m_ZDelta() );
+
+        m_Transform.rotateX( m_XRotate() );
+        m_Transform.rotateY( m_YRotate() );
+        m_Transform.rotateZ( m_ZRotate() );
+
+        m_TransformedCurve.Transform( m_Transform );
+
+        vec3d trans = m_Transform.getTranslation();
+        m_XAbs = trans.x();
+        m_YAbs = trans.y();
+        m_ZAbs = trans.z();
+
+        vec3d angles = m_Transform.getAngles();
+        m_XRotateAbs = angles.x();
+        m_YRotateAbs = angles.y();
+        m_ZRotateAbs = angles.z();
+    }
+    else
+    {
+        Matrix4d prevmat;
+        if( indx > 0 )
+        {
+            StackXSec* prevxs = (StackXSec*) xsecsurf->FindXSec( indx - 1);
+            if( prevxs )
+            {
+                prevmat.matMult( prevxs->GetTransform()->data() );
+            }
+        }
+
+        m_Transform.translatef( m_XAbs(), m_YAbs(), m_ZAbs() );
+
+        m_Transform.rotateX( m_XRotateAbs() );
+        m_Transform.rotateY( m_YRotateAbs() );
+        m_Transform.rotateZ( m_ZRotateAbs() );
+
+        m_TransformedCurve.Transform( m_Transform );
+
+        prevmat.affineInverse();
+        prevmat.matMult( m_Transform.data() );
+
+        vec3d trans = prevmat.getTranslation();
+        m_XDelta = trans.x();
+        m_YDelta = trans.y();
+        m_ZDelta = trans.z();
+
+        vec3d angles = prevmat.getAngles();
+        m_XRotate = angles.x();
+        m_YRotate = angles.y();
+        m_ZRotate = angles.z();
     }
 
-    m_Transform.translatef( m_XDelta(), m_YDelta(), m_ZDelta() );
-
-    m_Transform.rotateX( m_XRotate() );
-    m_Transform.rotateY( m_YRotate() );
-    m_Transform.rotateZ( m_ZRotate() );
-
-    m_TransformedCurve.OffsetX( m_XCenterRot() );
-    m_TransformedCurve.OffsetY( m_YCenterRot() );
-    m_TransformedCurve.OffsetZ( m_ZCenterRot() );
-
-    m_TransformedCurve.Transform( m_Transform );
-
-    m_TransformedCurve.OffsetX( -m_XCenterRot() );
-    m_TransformedCurve.OffsetY( -m_YCenterRot() );
-    m_TransformedCurve.OffsetZ( -m_ZCenterRot() );
 
     if( indx < xsecsurf->NumXSec() - 1 )
     {
@@ -2042,13 +2138,26 @@ void StackXSec::CopyBasePos( XSec* xs )
     {
         StackXSec* sxs = ( StackXSec* ) xs;
 
+        m_XSAbsRelFlag = sxs->m_XSAbsRelFlag();
+
+        m_Spin = sxs->m_Spin();
+
         m_XDelta = sxs->m_XDelta();
         m_YDelta = sxs->m_YDelta();
         m_ZDelta = sxs->m_ZDelta();
 
+        m_XAbs = sxs->m_XAbs();
+        m_YAbs = sxs->m_YAbs();
+        m_ZAbs = sxs->m_ZAbs();
+
         m_XRotate = sxs->m_XRotate();
         m_YRotate = sxs->m_YRotate();
         m_ZRotate = sxs->m_ZRotate();
+
+        m_XRotateAbs = sxs->m_XRotateAbs();
+        m_YRotateAbs = sxs->m_YRotateAbs();
+        m_ZRotateAbs = sxs->m_ZRotateAbs();
+
     }
 }
 

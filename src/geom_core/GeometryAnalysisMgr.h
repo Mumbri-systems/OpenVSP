@@ -15,6 +15,7 @@
 #include "Parm.h"
 #include "TMesh.h"
 #include "DrawObj.h"
+#include "MaterialMgr.h"
 
 class AuxiliaryGeom;
 
@@ -36,8 +37,11 @@ public:
     string GetSecondaryName() const;
 
     vector< TMesh* > GetPrimaryTMeshVec();
+    vector< TetraMassProp* > GetPrimaryTetraMassPropVec();
     vector< TMesh* > GetSecondaryTMeshVec();
     vector< TMesh* > GetHingeSecondaryTMeshVec();
+
+    BndBox GetPrimaryScaleIndependentBBox() const;
 
     bool GetPrimaryTwoPtSideContactPtsNormal( vec3d &p1, vec3d &p2, vec3d &normal );
     bool GetPrimaryContactPointVecNormal( vector < vec3d > &ptvec, vec3d &normal );
@@ -54,6 +58,7 @@ public:
     bool GetSecondaryPtNormalMeanContactPivotAxis( vec3d &pt, vec3d &normal, vec3d &ptaxis, vec3d &axis, bool &usepivot, double &mintheta, double &maxtheta );
     bool GetSecondaryPtNormalAftAxleAxis( double thetabogie, vec3d &pt, vec3d &normal, vec3d &ptaxis, vec3d &axis );
     bool GetSecondaryPtNormalFwdAxleAxis( double thetabogie, vec3d &pt, vec3d &normal, vec3d &ptaxis, vec3d &axis );
+    bool GetSecondarySpreadTri( vec3d &pt, vec3d &axis, vector < vec3d > &t, int &flip );
 
     virtual xmlNodePtr EncodeXml( xmlNodePtr & node );
     virtual xmlNodePtr DecodeXml( xmlNodePtr & node );
@@ -71,10 +76,13 @@ public:
     void ShowSecondary();
     void ShowOnlySecondary();
 
+    void AssignTMeshDO( TMesh *tm, const Material & mat, const vec3d & color, int indx );
     void UpdateDrawObj_PostAnalysis();
     void UpdateDrawObj_Live();
 
     void LoadDrawObjs( vector< DrawObj* > & draw_obj_vec );
+
+    string MakeMeshGeom();
 
     string m_GroupName;
 
@@ -86,6 +94,7 @@ public:
     IntParm m_SecondarySet;
     IntParm m_SecondaryType; // Set or Geom
     string m_SecondaryGeomID;
+    string m_DirectionGeomID;
 
     Parm m_SecondaryZGround;
 
@@ -123,12 +132,31 @@ public:
     Parm m_Elevation;
     Parm m_N2RefractionIndex;
 
+    // Wetted Area and Volume
+    BoolParm m_HalfMeshFlag;
+    BoolParm m_UseSubSurfFlag;
+
+    // Area Slice and Mass Prop
+    IntParm m_NumSlices;
+    IntParm m_SliceDir;
+    BoolParm m_AutoBoundsFlag;
+    Parm m_PlanarStartLocation;
+    Parm m_PlanarEndLocation;
+    BoolParm m_PlanarMeasureDuct;
+
+    // Projection
+    BoolParm m_TargetHullFlag;
+    BoolParm m_BoundaryEnableFlag;
+    BoolParm m_BoundaryHullFlag;
+    IntParm m_DirectionType;
+
     IntParm m_GeometryAnalysisType;
 
     string m_LastResult;
     Parm m_LastResultValue;
 
     vector< TMesh* > m_TMeshVec;
+    vector< TMesh* > m_SliceTMeshVec;
     vector < vec3d > m_PtsVec;
 
 
@@ -177,6 +205,7 @@ public:
     int GetGeometryAnalysisIndex( const string &id ) const;
 
     vector < GeometryAnalysisCase* > GetAllGeometryAnalyses() const            { return m_GeometryAnalysisVec; };
+    vector < string > GetAllGeometryAnalysesIDVec() const;
 
 
 protected:

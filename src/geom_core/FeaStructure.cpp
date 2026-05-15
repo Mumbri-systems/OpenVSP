@@ -2930,7 +2930,7 @@ PolySparPoint* FeaPolySpar::AddPt()
 
 PolySparPoint* FeaPolySpar::InsertPt( int index )
 {
-    if ( index >= 0 && index <= m_SparPointVec.size() )
+    if ( ValidPtIndex( index ) )
     {
         PolySparPoint *rpt = new PolySparPoint();
         rpt->SetParentContainer( m_ID );
@@ -2943,7 +2943,7 @@ PolySparPoint* FeaPolySpar::InsertPt( int index )
 
 void FeaPolySpar::DelPt( int index )
 {
-    if ( index >= 0 && index < m_SparPointVec.size() )
+    if ( ValidPtIndex( index ) )
     {
         PolySparPoint *spt = m_SparPointVec[ index ];
         m_SparPointVec.erase( m_SparPointVec.begin() + index );
@@ -2963,7 +2963,7 @@ void FeaPolySpar::DelAllPt()
 
 int FeaPolySpar::MovePt( int index, int reorder_type )
 {
-    if ( index >= 0 && index < m_SparPointVec.size() )
+    if ( ValidPtIndex( index ) )
     {
         int newindx = ReorderVectorIndex( m_SparPointVec, index, reorder_type );
 
@@ -2974,11 +2974,26 @@ int FeaPolySpar::MovePt( int index, int reorder_type )
 
 PolySparPoint * FeaPolySpar::GetPt( int index )
 {
-    if ( index >= 0 && index < m_SparPointVec.size() )
+    if ( ValidPtIndex( index ) )
     {
         return m_SparPointVec[ index ];
     }
     return nullptr;
+}
+
+vector < string > FeaPolySpar::GetAllPtIDVec()
+{
+    vector < string > ret( m_SparPointVec.size() );
+    for ( int i = 0; i < m_SparPointVec.size(); i++ )
+    {
+        ret[ i ] = m_SparPointVec[ i ]->GetID();
+    }
+    return ret;
+}
+
+bool FeaPolySpar::ValidPtIndex( int index )
+{
+    return ( index >= 0 && index < m_SparPointVec.size() );
 }
 
 //////////////////////////////////////////////////////
@@ -5683,16 +5698,23 @@ void FeaProperty::Update()
         }
         else if ( m_CrossSectType() == vsp::FEA_XSEC_RECT )
         {
-            const double b = m_Dim1();
-            const double h = m_Dim2();
-            const double b3 = b * b * b;
-            const double h3 = h * h * h;
-            const double b4 = b3 * b;
-            const double h4 = h3 * h;
+            double b = m_Dim1();
+            double h = m_Dim2();
+            double b3 = b * b * b;
+            double h3 = h * h * h;
 
             m_CrossSecArea = b * h;
             m_Izz = b * h3 / 12.0;
             m_Iyy = b3 * h / 12.0;
+
+            b = std::max( m_Dim1(), m_Dim2() );
+            h = std::min( m_Dim1(), m_Dim2() );
+
+            b3 = b * b * b;
+            h3 = h * h * h;
+            const double b4 = b3 * b;
+            const double h4 = h3 * h;
+
             m_Ixx = b * h3 * ( ( 1.0 / 3.0 ) - 0.21 * ( h / b ) * ( 1.0 - ( h4 / ( 12.0 * b4 ) ) ) );
             m_Izy = 0.0;
         }
@@ -5724,7 +5746,7 @@ void FeaProperty::Update()
             m_CrossSecArea = b * h - bi * hi;
             m_Izz = ( b * h3 - bi * hi3 ) / 12.0;
             m_Iyy = ( b3 * h - bi3 * hi ) / 12.0;
-            m_Ixx = ( 2 * t2 * t2 * a2 * c2 ) / ( b * t2 + h * t1 - t22 - t12 );
+            m_Ixx = ( 2 * t2 * t1 * a2 * c2 ) / ( b * t2 + h * t1 - t22 - t12 );
             m_Izy = 0.0;
         }
     }

@@ -349,9 +349,16 @@ public:
     Parm m_FwdCluster;
     Parm m_AftCluster;
 
+    Parm m_VAlign;
+
     Parm m_XDelta;
     Parm m_YDelta;
     Parm m_ZDelta;
+
+    IntParm m_XSAbsRelFlag;
+    Parm m_XAbs;
+    Parm m_YAbs;
+    Parm m_ZAbs;
 
     Parm m_Spin;
 
@@ -359,9 +366,9 @@ public:
     Parm m_YRotate;
     Parm m_ZRotate;
 
-    Parm m_XCenterRot;
-    Parm m_YCenterRot;
-    Parm m_ZCenterRot;
+    Parm m_XRotateAbs;
+    Parm m_YRotateAbs;
+    Parm m_ZRotateAbs;
 
 protected:
 };

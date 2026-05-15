@@ -592,6 +592,14 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
     assert( r >= 0 );
     r = se->RegisterEnumValue( "AUX_GEOM_MODE", "AUX_GEOM_SINGLE_GEAR", AUX_GEOM_SINGLE_GEAR );
     assert( r >= 0 );
+    r = se->RegisterEnumValue( "AUX_GEOM_MODE", "AUX_GEOM_TIRE_SPRAY", AUX_GEOM_TIRE_SPRAY );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "AUX_GEOM_MODE", "AUX_GEOM_WHEEL_TIRE_FAILURE", AUX_GEOM_WHEEL_TIRE_FAILURE );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "AUX_GEOM_MODE", "AUX_GEOM_ROTOR_FRAGMENT", AUX_GEOM_ROTOR_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "AUX_GEOM_MODE", "AUX_GEOM_THROWN_BLADE", AUX_GEOM_THROWN_BLADE );
+    assert( r >= 0 );
     r = se->RegisterEnumValue( "AUX_GEOM_MODE", "NUM_AUX_GEOM_MODES", NUM_AUX_GEOM_MODES );
     assert( r >= 0 );
 
@@ -979,6 +987,8 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
 
 
     r = se->RegisterEnum( "ERROR_CODE" );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "ERROR_CODE", "VSP_UNKNOWN", vsp::VSP_UNKNOWN );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "ERROR_CODE", "VSP_OK", vsp::VSP_OK );
     assert( r >= 0 );
@@ -1406,6 +1416,24 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
     assert( r >= 0 );
 
 
+    r = se->RegisterEnum( "FRAGMENT_MODE" );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "ONE_THIRD_ROTOR_FRAGMENT", ONE_THIRD_ROTOR_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "INTERMEDIATE_FRAGMENT", INTERMEDIATE_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "ALTERNATE_FRAGMENT", ALTERNATE_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "FAN_FRAGMENT", FAN_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "SMALL_FRAGMENT", SMALL_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "GENERIC_FRAGMENT", GENERIC_FRAGMENT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "FRAGMENT_MODE", "NUM_FRAGMENT_MODES", NUM_FRAGMENT_MODES );
+    assert( r >= 0 );
+
+
     r = se->RegisterEnum( "FREESTREAM_PD_UNITS" );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "FREESTREAM_PD_UNITS", "PD_UNITS_IMPERIAL", PD_UNITS_IMPERIAL );
@@ -1575,6 +1603,16 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
     r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "LINEAR_SWEPT_VOLUME_ANALYSIS", LINEAR_SWEPT_VOLUME_ANALYSIS );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "VISIBLE_AT_SURF_ANALYSIS", VISIBLE_AT_SURF_ANALYSIS );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "RISK_ANGLE", RISK_ANGLE );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "COMP_GEOM", COMP_GEOM );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "PLANAR_SLICE", PLANAR_SLICE );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "PROJ_AREA", PROJ_AREA );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "MASS_PROP", MASS_PROP );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "GEOMETRY_ANALYSIS_TYPE", "NUM_INTERFERENCE_TYPES", NUM_INTERFERENCE_TYPES );
     assert( r >= 0 );
@@ -2021,6 +2059,16 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
     assert( r >= 0 );
 
 
+    r = se->RegisterEnum( "PROP_BLADE_MODE" );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "PROP_BLADE_MODE", "PROP_BLADE_TRADITIONAL", PROP_BLADE_TRADITIONAL );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "PROP_BLADE_MODE", "PROP_BLADE_NONTRADITIONAL", PROP_BLADE_NONTRADITIONAL );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "PROP_BLADE_MODE", "NUM_PROP_BLADE_MODES", NUM_PROP_BLADE_MODES );
+    assert( r >= 0 );
+
+
     r = se->RegisterEnum( "PROP_DRIVERS" );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "PROP_DRIVERS", "RPM_PROP_DRIVER", RPM_PROP_DRIVER );
@@ -2196,6 +2244,10 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
     r = se->RegisterEnumValue( "SCALE_TYPE", "SCALE_WIDTH_HEIGHT", SCALE_WIDTH_HEIGHT );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "SCALE_TYPE", "SCALE_RESOLUTION", SCALE_RESOLUTION );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "SCALE_TYPE", "SCALE_WIDTH_AR", SCALE_WIDTH_AR );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "SCALE_TYPE", "SCALE_HEIGHT_AR", SCALE_HEIGHT_AR );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "SCALE_TYPE", "NUM_SCALE_TYPES", NUM_SCALE_TYPES );
     assert( r >= 0 );
@@ -2521,6 +2573,40 @@ void ScriptMgrSingleton::RegisterEnums( asIScriptEngine* se )
     r = se->RegisterEnumValue( "VSP_SURF_TYPE", "DISK_SURF", DISK_SURF );
     assert( r >= 0 );
     r = se->RegisterEnumValue( "VSP_SURF_TYPE", "NUM_SURF_TYPES", NUM_SURF_TYPES );
+    assert( r >= 0 );
+
+
+    r = se->RegisterEnum( "WHEEL_TIRE_FAILURE_TYPE" );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "WHEEL_TIRE_1LG", WHEEL_TIRE_1LG );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "WHEEL_TIRE_1SM", WHEEL_TIRE_1SM );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "WHEEL_TIRE_2", WHEEL_TIRE_2 );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "WHEEL_TIRE_3E", WHEEL_TIRE_3E );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "WHEEL_TIRE_3R", WHEEL_TIRE_3R );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "WHEEL_TIRE_4", WHEEL_TIRE_4 );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "WHEEL_TIRE_FAILURE_TYPE", "NUM_WHEEL_TIRE_FAILURE_MODES", NUM_WHEEL_TIRE_FAILURE_MODES );
+    assert( r >= 0 );
+
+
+    r = se->RegisterEnum( "W_HINT" );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "W_HINT", "W_RIGHT_0", W_RIGHT_0 );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "W_HINT", "W_BOTTOM", W_BOTTOM );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "W_HINT", "W_LEFT", W_LEFT );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "W_HINT", "W_TOP", W_TOP );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "W_HINT", "W_RIGHT_1", W_RIGHT_1 );
+    assert( r >= 0 );
+    r = se->RegisterEnumValue( "W_HINT", "W_FREE", W_FREE );
     assert( r >= 0 );
 
 
@@ -3592,6 +3678,21 @@ void ScriptMgrSingleton::RegisterAPI( asIScriptEngine* se )
     r = se->RegisterGlobalFunction( "void SetVec3dAnalysisInput( const string & in analysis, const string & in name, array<vec3d>@+ indata_arr, int index = 0 )", asMETHOD( ScriptMgrSingleton, SetVec3dAnalysisInput ), asCALL_THISCALL_ASGLOBAL, &ScriptMgr );
     assert( r >= 0 );
 
+
+    r = se->RegisterGlobalFunction( "string AddGeometryAnalysis( )", asFUNCTION( vsp::AddGeometryAnalysis ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "void DeleteGeometryAnalysis( const string & in id )", asFUNCTION( vsp::DeleteGeometryAnalysis ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "void DeleteAllGeometryAnalyses()", asFUNCTION( vsp::DeleteAllGeometryAnalyses ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "array<string>@+ GetAllGeometryAnalysesIDVec()", asMETHOD( ScriptMgrSingleton, GetAllGeometryAnalysesIDVec ), asCALL_THISCALL_ASGLOBAL, &ScriptMgr );
+    assert( r >= 0 );
 
     //==== Results Functions ====//
 
@@ -5314,6 +5415,45 @@ void ScriptMgrSingleton::RegisterAPI( asIScriptEngine* se )
     r = se->RegisterGlobalFunction( "int GetFeaSubSurfIndex( const string & in ss_id )", asFUNCTION( vsp::GetFeaSubSurfIndex ), asCALL_CDECL );
     assert( r >= 0 );
 
+    r = se->RegisterGlobalFunction( "int GetFeaPolySparNumPt( const string & in pspar_id )", asFUNCTION( vsp::GetFeaPolySparNumPt ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "string AddFeaPolySparPt( const string & in pspar_id )", asFUNCTION( vsp::AddFeaPolySparPt ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "string InsertFeaPolySparPt( const string & in pspar_id, int index )", asFUNCTION( vsp::InsertFeaPolySparPt ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "void DelFeaPolySparPt( const string & in pspar_id, int index )", asFUNCTION( vsp::DelFeaPolySparPt ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "void DelAllFeaPolySparPt( const string & in pspar_id )", asFUNCTION( vsp::DelAllFeaPolySparPt ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "int MoveFeaPolySparPt( const string & in pspar_id, int index, int reorder_type )", asFUNCTION( vsp::MoveFeaPolySparPt ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "void SetFeaPolySparPtName( const string & in pspar_id, int index, const string & in name )", asFUNCTION( vsp::SetFeaPolySparPtName ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "string GetFeaPolySparPtName( const string & in pspar_id, int index )", asFUNCTION( vsp::GetFeaPolySparPtName ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "string GetFeaPolySparPtID( const string & in pspar_id, int index )", asFUNCTION( vsp::GetFeaPolySparPtID ), asCALL_CDECL );
+    assert( r >= 0 );
+
+
+    r = se->RegisterGlobalFunction( "array<string>@+ GetAllFeaPolySparPtIDVec( const string & in pspar_id )", asMETHOD( ScriptMgrSingleton, GetAllFeaPolySparPtIDVec ), asCALL_THISCALL_ASGLOBAL, &ScriptMgr );
+    assert( r >= 0 );
+
 
     r = se->RegisterGlobalFunction( "int NumFeaStructures()", asFUNCTION( vsp::NumFeaStructures ), asCALL_CDECL );
     assert( r >= 0 );
@@ -5810,6 +5950,12 @@ CScriptArray* ScriptMgrSingleton::GetVec3dAnalysisInput( const string & analysis
 {
     m_ProxyVec3dArray = vsp::GetVec3dAnalysisInput( analysis, name, index );
     return GetProxyVec3dArray();
+}
+
+CScriptArray* ScriptMgrSingleton::GetAllGeometryAnalysesIDVec()
+{
+    m_ProxyStringArray = vsp::GetAllGeometryAnalysesIDVec();
+    return GetProxyStringArray();
 }
 
 CScriptArray* ScriptMgrSingleton::FindAllAttributes()
@@ -6403,6 +6549,12 @@ CScriptArray* ScriptMgrSingleton::GetFeaStructIDVec()
 CScriptArray* ScriptMgrSingleton::GetFeaSubSurfIDVec( const string & fea_struct_id )
 {
     m_ProxyStringArray = vsp::GetFeaSubSurfIDVec( fea_struct_id );
+    return GetProxyStringArray();
+}
+
+CScriptArray* ScriptMgrSingleton::GetAllFeaPolySparPtIDVec( const string & pspar_id )
+{
+    m_ProxyStringArray = vsp::GetAllFeaPolySparPtIDVec( pspar_id );
     return GetProxyStringArray();
 }
 

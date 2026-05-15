@@ -666,6 +666,33 @@ Results* ProjectionMgrSingleton::Project( const string &tgeom, bool thullflag, c
 
 Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, const vec3d & dir )
 {
+    //==== Create Results ====//
+    Results* res = ResultsMgr.CreateResults( "Projection", "Projected area results." );
+
+    vector < TMesh* > solutionTMeshVec;
+    vector < vector < vec3d > > solutionPolyVec3d;
+    bool success = Project( targetTMeshVec, dir, res, solutionTMeshVec, solutionPolyVec3d );
+
+    if ( success )
+    {
+        string id = MakeMeshGeom( solutionTMeshVec, solutionPolyVec3d );
+
+        res->Add( new NameValData( "Mesh_GeomID", id, "GeomID of MeshGeom of the projected area." ) );
+
+        // Clear pointers, they have been transferred to the MeshGeom.
+        // Do not delete TMeshs.
+        solutionTMeshVec.clear();
+    }
+    else
+    {
+        res->Add( new NameValData( "Mesh_GeomID", string( "" ), "Empty GeomID.  Projection had no solution." ) );
+    }
+
+    return res;
+}
+
+bool ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, const vec3d & dir, Results* res, vector < TMesh* > &solutionTMeshVec, vector < vector < vec3d > > &solutionPolyVec3d )
+{
     Matrix4d mat;
     mat.rotatealongX( dir );
 
@@ -686,9 +713,6 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, con
     vector < Clipper2Lib::Paths64 > utargetvec;
 
     Union( targetvec, utargetvec, targetids );
-
-    //==== Create Results ====//
-    Results* res = ResultsMgr.CreateResults( "Projection", "Projected area results." );
 
     Vehicle* veh = VehicleMgr.GetVehicle();
 
@@ -718,7 +742,6 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, con
     {
         ClosePaths( solution );
 
-        vector < vector < vec3d > > solutionPolyVec3d;
         PathsToPolyVec( solution, solutionPolyVec3d );
 
         TransformPolyVec( solutionPolyVec3d, fromclipper );
@@ -731,7 +754,7 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, con
         vector < vector < vec2d > > solutionPolyVec2d;
         Poly3dToPoly2d( solutionPolyVec3d, solutionPolyVec2d );
 
-        vector < TMesh* > solutionTMeshVec = Triangulate( solutionPolyVec2d, solutionPolyVec3d, isHole );
+        solutionTMeshVec = Triangulate( solutionPolyVec2d, solutionPolyVec3d, isHole );
 
         mat.affineInverse();
         TransformPolyVec( solutionPolyVec3d, mat );
@@ -743,7 +766,23 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, con
 
         TransformMeshVec( solutionTMeshVec, mat );
 
-        string id = MakeMeshGeom( solutionTMeshVec, solutionPolyVec3d );
+        return true;
+    }
+    return false;
+}
+
+Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vector < TMesh* > &boundaryTMeshVec, const vec3d & dir )
+{
+    //==== Create Results ====//
+    Results* res = ResultsMgr.CreateResults( "Projection", "Projected area with bounding mesh results." );
+
+    vector < TMesh* > solutionTMeshVec;
+    vector < vector < vec3d > > solutionPolyVec3d;
+    bool success = Project( targetTMeshVec, boundaryTMeshVec, dir, res, solutionTMeshVec, solutionPolyVec3d );
+
+    if ( success )
+    {
+        string id =  MakeMeshGeom( solutionTMeshVec, solutionPolyVec3d );
 
         res->Add( new NameValData( "Mesh_GeomID", id, "GeomID of MeshGeom of the projected area." ) );
 
@@ -759,7 +798,7 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, con
     return res;
 }
 
-Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vector < TMesh* > &boundaryTMeshVec, const vec3d & dir )
+bool ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vector < TMesh* > &boundaryTMeshVec, const vec3d & dir, Results* res, vector < TMesh* > &solutionTMeshVec, vector < vector < vec3d > > &solutionPolyVec3d )
 {
     Matrix4d mat;
     mat.rotatealongX( dir );
@@ -784,9 +823,6 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vec
     vector < Clipper2Lib::Paths64 > utargetvec;
 
     Union( targetvec, utargetvec, targetids );
-
-    //==== Create Results ====//
-    Results* res = ResultsMgr.CreateResults( "Projection", "Projected area with bounding mesh results." );
 
     Vehicle* veh = VehicleMgr.GetVehicle();
 
@@ -832,7 +868,6 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vec
     {
         ClosePaths( solution );
 
-        vector < vector < vec3d > > solutionPolyVec3d;
         PathsToPolyVec( solution, solutionPolyVec3d );
 
         TransformPolyVec( solutionPolyVec3d, fromclipper );
@@ -845,7 +880,7 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vec
         vector < vector < vec2d > > solutionPolyVec2d;
         Poly3dToPoly2d( solutionPolyVec3d, solutionPolyVec2d );
 
-        vector < TMesh* > solutionTMeshVec = Triangulate( solutionPolyVec2d, solutionPolyVec3d, isHole );
+        solutionTMeshVec = Triangulate( solutionPolyVec2d, solutionPolyVec3d, isHole );
 
         mat.affineInverse();
         TransformPolyVec( solutionPolyVec3d, mat );
@@ -857,20 +892,9 @@ Results* ProjectionMgrSingleton::Project( vector < TMesh* > &targetTMeshVec, vec
 
         TransformMeshVec( solutionTMeshVec, mat );
 
-        string id =  MakeMeshGeom( solutionTMeshVec, solutionPolyVec3d );
-
-        res->Add( new NameValData( "Mesh_GeomID", id, "GeomID of MeshGeom of the projected area." ) );
-
-        // Clear pointers, they have been transferred to the MeshGeom.
-        // Do not delete TMeshs.
-        solutionTMeshVec.clear();
+        return true;
     }
-    else
-    {
-        res->Add( new NameValData( "Mesh_GeomID", string( "" ), "Empty GeomID.  Projection had no solution." ) );
-    }
-
-    return res;
+    return false;
 }
 
 bool TMeshCompare( TMesh* a, TMesh* b )

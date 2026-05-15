@@ -73,6 +73,7 @@ public:
     virtual bool GetTwoPtSideContactPtsNormal( vec3d &p1, vec3d &p2, vec3d &normal );
     virtual bool GetContactPointVecNormal( vector < vec3d > &ptvec, vec3d &normal );
     virtual bool CalculateTurn( vec3d &cor, vec3d &normal, vector<double> &rvec );
+    virtual bool GetSpreadTri( vec3d &pt, vec3d &axis, vector < vec3d > &t, int &flip );
 
     IntParm m_AuxuliaryGeomMode;
 
@@ -83,8 +84,23 @@ public:
     Parm m_RootLength;
     Parm m_RootOffset;
 
+    IntParm m_RotorFragmentMode;
     Parm m_ThetaThrust;
     Parm m_ThetaAntiThrust;
+
+    Parm m_DiskRadius;
+    Parm m_BladeLength;
+    Parm m_BladeRootRadius;
+
+    Parm m_FragLength;
+    Parm m_CGRadius;
+
+    Parm m_ReleaseAngle;
+
+    BoolParm m_RotDir;
+
+    IntParm m_ThrownBladeMode;
+    Parm m_ThrownBladeCGFrac;
 
     int m_ParentType;
 
@@ -115,6 +131,22 @@ public:
     Parm m_BogieTheta;
     Parm m_WheelTheta;
     Parm m_RollTheta;
+
+
+    Parm m_SprayTireContactWidth;
+    Parm m_SprayTireContactHalfLength;
+
+    Parm m_SpraySideElevationAngle;
+    Parm m_SpraySidePlanAngle;
+    Parm m_SpraySideIncrementalAngle;
+    Parm m_SpraySideInclinationAngle;
+
+    Parm m_SprayCenterElevationAngle;
+    Parm m_SprayCenterWidth;
+
+
+    IntParm m_WheelTireFailureMode;
+
 protected:
 
     virtual void SetDirtyFlags( Parm* parm_ptr );
@@ -123,6 +155,7 @@ protected:
     virtual void UpdateMainTessVec();
     virtual void UpdateMainDegenGeomPreview();
     virtual void UpdateCopyParms();
+    virtual void UpdateFlags();
 
     virtual void UpdateDrawObj();
     virtual void LoadDrawObjs( vector< DrawObj* > & draw_obj_vec );

@@ -43,10 +43,14 @@ protected:
 
     GroupLayout m_RotorTipPathLayput;
     GroupLayout m_RotorBurstLayout;
+    GroupLayout m_FragmentLayout;
+    GroupLayout m_ThrownBladeLayout;
     GroupLayout m_3ptGroundPlaneLayout;
     GroupLayout m_2ptGroundPlaneLayout;
     GroupLayout m_1ptGroundPlaneLayout;
     GroupLayout m_SingleGearLayout;
+    GroupLayout m_TireSprayLayout;
+    GroupLayout m_WheelTireFailureLayout;
     GroupLayout m_3ptCCELayout;
     GroupLayout m_SuperConeXSecLayout;
 
@@ -67,13 +71,38 @@ protected:
     ToggleButton m_RB_AutoDiamToggleButton;
 
     SliderAdjRangeInput m_RB_DiameterSlider;
-    SliderAdjRangeInput m_RB_FlapRadiusFractSlider;
 
     SliderAdjRangeInput m_RB_ThetaThrustSlider;
     SliderAdjRangeInput m_RB_ThetaAntiThrustSlider;
 
     SliderAdjRangeInput m_RB_RootLengthSlider;
     SliderAdjRangeInput m_RB_RootOffsetSlider;
+
+    // AC 20-128A Fragment
+    Choice m_FragModeChoice;
+
+    SliderAdjRangeInput m_FragDiskRadiusSlider;
+    SliderAdjRangeInput m_FragBladeLenSlider;
+    SliderAdjRangeInput m_FragBladeR0Slider;
+
+    SliderAdjRangeInput m_FragFragmentLenSlider;
+    SliderAdjRangeInput m_FragCGradiusSlider;
+
+    SliderAdjRangeInput m_FragReleaseAngleSlider;
+
+    ToggleButton m_FragRotDirToggleButton;
+
+    SliderAdjRangeInput m_FragThetaThrustSlider;
+    SliderAdjRangeInput m_FragThetaAntiThrustSlider;
+
+    // AC 25.905-1 thrown blade
+    Choice m_ThrownBladeModeChoice;
+
+    SliderAdjRangeInput m_BladeCGSlider;
+    SliderAdjRangeInput m_BladeReleaseAngleSlider;
+
+    SliderAdjRangeInput m_BladeThetaThrustSlider;
+    SliderAdjRangeInput m_BladeThetaAntiThrustSlider;
 
     // 3pt Ground Plane
 
@@ -128,6 +157,32 @@ protected:
     Choice m_SingleBogie1ClearanceModeChoice;
     Choice m_SingleBogie1GearModeChoice;
     SliderAdjRangeInput m_SingleKRetractSlider;
+
+    // Tire Spray
+
+    Choice m_SprayBogie1Choice;
+    Choice m_SprayBogie1SymmChoice;
+
+
+    SliderAdjRangeInput m_SprayTireContactWidthSlider;
+    SliderAdjRangeInput m_SprayTireContactHalfLengthSlider;
+
+    SliderAdjRangeInput m_SpraySideElevationAngleSlider;
+    SliderAdjRangeInput m_SpraySidePlanAngleSlider;
+    SliderAdjRangeInput m_SpraySideIncrementalAngleSlider;
+    SliderAdjRangeInput m_SpraySideInclinationAngleSlider;
+
+    SliderAdjRangeInput m_SprayCenterElevationAngleSlider;
+    SliderAdjRangeInput m_SprayCenterWidthSlider;
+
+    // AMC 25.734 Wheel and Tire Failure
+
+    Choice m_WheelTireFailureBogie1Choice;
+    Choice m_WheelTireFailureBogie1SymmChoice;
+
+    Choice m_WheelTireFailureModeChoice;
+
+
 
     // 3pt CCE
 

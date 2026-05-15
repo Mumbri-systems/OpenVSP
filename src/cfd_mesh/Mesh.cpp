@@ -13,7 +13,11 @@
 #include "VspUtil.h"
 #include <triangle.h>
 #include <triangle_api.h>
+#include "delabella.h"
 #include "SurfaceIntersectionMgr.h"
+#include <algorithm>
+#include <numeric>
+#include <random>
 
 bool LongEdgePairLengthCompare( const pair< Edge*, double >& a, const pair< Edge*, double >& b )
 {
@@ -1545,6 +1549,204 @@ bool vec2dCompare( const vec2d &a, const vec2d &b )
     return a.x() < b.x();
 }
 
+vector< int > Mesh::RandomizePointOrder( vector< vec2d > & uw, vector< MeshSeg > & segs )
+{
+    int npt = (int)uw.size();
+
+    // perm[new_idx] = old_idx
+    vector< int > perm( npt );
+    iota( perm.begin(), perm.end(), 0 );
+    shuffle( perm.begin(), perm.end(), mt19937{ random_device{}() } );
+
+    vector< int > inv_perm( npt );
+    for ( int i = 0; i < npt; i++ )
+    {
+        inv_perm[perm[i]] = i;
+    }
+
+    vector< vec2d > uw_shuffled( npt );
+    for ( int i = 0; i < npt; i++ )
+    {
+        uw_shuffled[i] = uw[perm[i]];
+    }
+    uw.swap( uw_shuffled );
+
+    for ( int j = 0; j < (int)segs.size(); j++ )
+    {
+        segs[j].m_Index[0] = inv_perm[segs[j].m_Index[0]];
+        segs[j].m_Index[1] = inv_perm[segs[j].m_Index[1]];
+    }
+
+    return perm;
+}
+
+void Mesh::RandomizeSegOrder( vector< MeshSeg > & segs )
+{
+    shuffle( segs.begin(), segs.end(), mt19937{ random_device{}() } );
+}
+
+bool Mesh::InitMesh_DBA( const vector< vec2d > & uw_prime, const vector< MeshSeg > & segs_indexes,
+                          vector< vector< int > > & connlist, vector< vec2d > & points_out )
+{
+    int npt  = uw_prime.size();
+    int nedg = segs_indexes.size();
+
+    dba_point* cloud  = new dba_point[npt];
+    dba_edge*  bounds = new dba_edge[nedg];
+
+    for ( int i = 0; i < npt; i++ )
+    {
+        cloud[i].x = uw_prime[i].x();
+        cloud[i].y = uw_prime[i].y();
+    }
+
+    for ( int i = 0; i < nedg; i++ )
+    {
+        bounds[i].a = segs_indexes[i].m_Index[0];
+        bounds[i].b = segs_indexes[i].m_Index[1];
+    }
+
+    IDelaBella2< double >* idb = IDelaBella2< double >::Create();
+
+    bool success = false;
+    int verts = idb->Triangulate( npt, &cloud->x, &cloud->y, sizeof( dba_point ) );
+
+    if ( verts > 0 )
+    {
+        idb->ConstrainEdges( nedg, &bounds->a, &bounds->b, sizeof( dba_edge ) );
+
+        int tris = idb->FloodFill( false, 0, 1 );
+
+        const IDelaBella2< double >::Simplex* dela = idb->GetFirstDelaunaySimplex();
+
+        connlist.resize( tris );
+        for ( int i = 0; i < tris; i++ )
+        {
+            connlist[i] = { dela->v[2]->i, dela->v[1]->i, dela->v[0]->i };
+            dela = dela->next;
+        }
+
+        points_out = uw_prime;
+        success = true;
+    }
+    else
+    {
+        printf( "DBA Error in InitMesh_DBA: %d\n", verts );
+    }
+
+    delete[] cloud;
+    delete[] bounds;
+    idb->Destroy();
+
+    return success;
+}
+
+bool Mesh::InitMesh_TRI( const vector< vec2d > & uw_prime, const vector< MeshSeg > & segs_indexes,
+                         vector< vector< int > > & connlist, vector< vec2d > & points_out )
+{
+    int num_pnts  = uw_prime.size();
+    int num_edges = segs_indexes.size();
+
+    context* ctx;
+    triangleio in, out;
+    int tristatus = TRI_NULL;
+
+    ctx = triangle_context_create();
+
+    memset( &in, 0, sizeof( in ) );
+    memset( &out, 0, sizeof( out ) );
+
+    in.pointlist   = ( REAL * ) malloc( num_pnts * 2 * sizeof( REAL ) );
+    in.segmentlist = ( int * )  malloc( num_edges * 2 * sizeof( int ) );
+    out.pointlist     = nullptr;
+    out.segmentlist   = nullptr;
+    out.trianglelist  = nullptr;
+
+    in.numberofpointattributes = 0;
+    in.pointattributelist  = nullptr;
+    in.pointmarkerlist     = nullptr;
+    in.numberofholes       = 0;
+    in.numberoftriangles   = 0;
+    in.numberofedges       = 0;
+    in.trianglelist        = nullptr;
+    in.trianglearealist    = nullptr;
+    in.edgelist            = nullptr;
+    in.edgemarkerlist      = nullptr;
+    in.segmentmarkerlist   = nullptr;
+
+    in.numberofpoints = num_pnts;
+
+    int cnt = 0;
+    for ( int j = 0; j < num_pnts; j++ )
+    {
+        in.pointlist[cnt++] = uw_prime[j].x();
+        in.pointlist[cnt++] = uw_prime[j].y();
+    }
+
+    in.numberofsegments = num_edges;
+    cnt = 0;
+    for ( int j = 0; j < num_edges; j++ )
+    {
+        in.segmentlist[cnt++] = segs_indexes[j].m_Index[0];
+        in.segmentlist[cnt++] = segs_indexes[j].m_Index[1];
+    }
+
+    double est_num_tris = ( uw_prime.size() / 4 ) * ( uw_prime.size() / 4 );
+    if ( est_num_tris < 1 )     est_num_tris = 1;
+    if ( est_num_tris > 10000 ) est_num_tris = 10000;
+
+    BndBox box;
+    for ( int i = 0; i < num_pnts; i++ )
+    {
+        box.Update( vec3d( uw_prime[i].x(), uw_prime[i].y(), 0 ) );
+    }
+
+    double uw_area = ( box.GetMax( 0 ) - box.GetMin( 0 ) ) * ( box.GetMax( 1 ) - box.GetMin( 1 ) );
+    double uw_tri_area = 4.0 * uw_area / est_num_tris;
+    if ( uw_tri_area < 1.0e-4 ) uw_tri_area = 1.0e-4;
+
+    char str[256];
+    snprintf( str, sizeof( str ), "zpYYQa%8.6fq20", uw_tri_area );
+
+    tristatus = triangle_context_options( ctx, str );
+    if ( tristatus != TRI_OK ) printf( "triangle_context_options Error\n" );
+
+    tristatus = triangle_mesh_create( ctx, &in );
+    if ( tristatus != TRI_OK ) printf( "triangle_mesh_create Error\n" );
+
+    if ( tristatus == TRI_OK )
+    {
+        triangle_mesh_copy( ctx, &out, 1, 1 );
+
+        points_out.resize( out.numberofpoints );
+        for ( int i = 0; i < out.numberofpoints; i++ )
+        {
+            points_out[i] = vec2d( out.pointlist[i * 2], out.pointlist[i * 2 + 1] );
+        }
+
+        connlist.reserve( out.numberoftriangles );
+        cnt = 0;
+        for ( int i = 0; i < out.numberoftriangles; i++ )
+        {
+            connlist.push_back( { out.trianglelist[cnt], out.trianglelist[cnt + 1], out.trianglelist[cnt + 2] } );
+            cnt += 3;
+        }
+
+    }
+
+    if ( in.pointlist )         free( in.pointlist );
+    if ( in.segmentlist )       free( in.segmentlist );
+    if ( out.pointlist )        free( out.pointlist );
+    if ( out.pointmarkerlist )  free( out.pointmarkerlist );
+    if ( out.trianglelist )     free( out.trianglelist );
+    if ( out.segmentlist )      free( out.segmentlist );
+    if ( out.segmentmarkerlist) free( out.segmentmarkerlist );
+
+    triangle_context_destroy( ctx );
+
+    return tristatus == TRI_OK;
+}
+
 void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_indexes, SurfaceIntersectionSingleton *MeshMgr )
 {
     assert( m_Surf );
@@ -1658,10 +1860,10 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
     snprintf( str, sizeof( str ), "%sMesh_UW%d.m", MeshMgr->m_DebugDir.c_str(), namecnt );
     fp = fopen( str, "w" );
 
-    if (fpmas )
+    if ( fpmas2 )
     {
         snprintf( str, sizeof( str ), "Mesh_UW%d.m", namecnt );
-        fprintf( fpmas, "run( '%s' );\n", str );
+        fprintf( fpmas2, "run( '%s' );\n", str );
     }
 
     fprintf( fp, "u = [" );
@@ -1715,114 +1917,92 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
 #endif
 
 
+#ifdef DEBUG_CFD_MESH
+    snprintf( str, sizeof( str ), "%sTriInput_%d.dat", MeshMgr->m_DebugDir.c_str(), namecnt );
+    fp = fopen( str, "w" );
 
-    //==== Dump Into Triangle ====//
-    context* ctx;
-    triangleio in, out;
-    int tristatus = TRI_NULL;
+    fprintf( fp, "%d\n", uw_prime.size() );
 
-    // init
-    ctx = triangle_context_create();
-
-    memset( &in, 0, sizeof( in ) ); // Load Zeros
-    memset( &out, 0, sizeof( out ) );
-
-    //==== PreAllocate Data For In/Out ====//
-    in.pointlist    = ( REAL * ) malloc( num_pnts * 2 * sizeof( REAL ) );
-    out.pointlist   = nullptr;
-
-    in.segmentlist  = ( int * ) malloc( num_edges * 2 * sizeof( int ) );
-    out.segmentlist  = nullptr;
-    out.trianglelist  = nullptr;
-
-    in.numberofpointattributes = 0;
-    in.pointattributelist = nullptr;
-    in.pointmarkerlist = nullptr;
-    in.numberofholes = 0;
-    in.numberoftriangles = 0;
-    in.numberofpointattributes = 0;
-    in.numberofedges = 0;
-    in.trianglelist = nullptr;
-    in.trianglearealist = nullptr;
-    in.edgelist = nullptr;
-    in.edgemarkerlist = nullptr;
-    in.segmentmarkerlist = nullptr;
-
-    //==== Load Points into Triangle Struct ====//
-    in.numberofpoints = num_pnts;
-
-    int cnt = 0;
-    for ( j = 0 ; j < num_pnts ; j++ )
+    for ( i = 0; i < (int)uw_prime.size(); i++ )
     {
-        in.pointlist[cnt] = uw_prime[j].x();
-        cnt++;
-        in.pointlist[cnt] = uw_prime[j].y();
-        cnt++;
+        fprintf( fp, "%d %.19e %.19e\n", i, uw_prime[i].x(), uw_prime[i].y() );
     }
 
-    in.numberofsegments = num_edges;
-    cnt = 0;
-    for ( j = 0 ; j < ( int )segs_indexes.size() ; j++ )
+    fprintf( fp, "%d\n", segs_indexes.size() );
+
+    for ( i = 0; i < (int)segs_indexes.size(); i++ )
     {
-        assert ( in.segmentlist[cnt] < num_pnts );
-        in.segmentlist[cnt] = segs_indexes[j].m_Index[0];
-        cnt++;
-        assert ( in.segmentlist[cnt] < num_pnts );
-        in.segmentlist[cnt] = segs_indexes[j].m_Index[1];
-        cnt++;
+        fprintf( fp, "%d %d %d\n", i, segs_indexes[i].m_Index[0], segs_indexes[i].m_Index[1] );
     }
+    fclose( fp );
+#endif
 
-    //==== Constrained Delaunay Triangulation ====//
-    double est_num_tris = ( uw_prime.size() / 4 ) * ( uw_prime.size() / 4 );
-    if ( est_num_tris < 1 )
+
+    //==== Attempt Triangulation ====//
+    vector< vector< int > > connlist;
+    vector< vec2d > points_out;
+
+    bool success = InitMesh_TRI( uw_prime, segs_indexes, connlist, points_out );
+    if ( !success )
     {
-        est_num_tris = 1;
-    }
-    if ( est_num_tris > 10000 )
-    {
-        est_num_tris = 10000;
-    }
+        int n = 0;
+        while ( !success && n < 5 )
+        {
+#ifdef DEBUG_CFD_MESH
+            printf( "  Triangulation failed for surface %d %s %s, randomizing point order for %d time and trying again\n", namecnt, m_Surf->GetName().c_str(), m_Surf->GetGeomID().c_str(), n );
+#endif
+            RandomizePointOrder( uw_prime, segs_indexes );
 
-    BndBox box;
-    for ( i = 0 ; i < ( int )uw_prime.size() ; i++ )
-    {
-        vec3d uwpnt( uw_prime[i].x(), uw_prime[i].y(), 0 );
-        box.Update( uwpnt );
-    }
-
-    double uw_area = ( box.GetMax( 0 ) - box.GetMin( 0 ) ) * ( box.GetMax( 1 ) - box.GetMin( 1 ) );
-    double fudgefactor = 4.0;
-    double uw_tri_area = fudgefactor * uw_area / est_num_tris;
-
-    if ( uw_tri_area < 1.0e-4 )
-    {
-        uw_tri_area = 1.0e-4;
-    }
-
-    snprintf( str, sizeof( str ), "zpYYQa%8.6fq20", uw_tri_area );
-
-    //==== Constrained Delaunay Triangulation ====//
-    tristatus = triangle_context_options( ctx, str );
-    if ( tristatus != TRI_OK ) printf( "triangle_context_options Error\n" );
-
-    // Triangulate the polygon
-    tristatus = triangle_mesh_create( ctx, &in );
-    if ( tristatus != TRI_OK ) printf( "triangle_mesh_create Error\n" );
+            connlist.clear();
+            points_out.clear();
+            success = InitMesh_TRI( uw_prime, segs_indexes, connlist, points_out );
+            n++;
+        }
 
 #ifdef DEBUG_CFD_MESH
-    if ( tristatus != TRI_OK ) printf( "  Triangle failed for surface %d\n", namecnt );
+        if ( success )
+        {
+            printf( "  Randomization Succeeded after %d tries\n\n", n );
+        }
+        else
+        {
+            printf ("  Randomization failed after %d tries\n", n );
+        }
+#endif
+    }
+    if ( !success )
+    {
+#ifdef DEBUG_CFD_MESH
+        printf( "  Triangulation failed for surface %d %s %s, falling back to DBA\n", namecnt, m_Surf->GetName().c_str(), m_Surf->GetGeomID().c_str() );
+#endif
+        connlist.clear();
+        points_out.clear();
+        success = InitMesh_DBA( uw_prime, segs_indexes, connlist, points_out );
+
+#ifdef DEBUG_CFD_MESH
+        if ( success )
+        {
+            printf( "  DBA Succeeded\n\n" );
+        }
+        else
+        {
+            printf( "  DBA Failed\n\n" );
+        }
+#endif
+    }
+
+#ifdef DEBUG_CFD_MESH
+    if ( !success ) printf( "  Triangulation failed for surface %d\n", namecnt );
 #endif
 
     //==== Clear All Node, Edge, Tri Data ====//
     Clear();
 
-    if ( tristatus == TRI_OK )
+    if ( success )
     {
-        triangle_mesh_copy( ctx, &out, 1, 1 );
-
         //==== Create Nodes ====//
         vector< Node* > nodeVec;
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
             vec2d uw;
             if ( i < num_pnts )
@@ -1831,37 +2011,30 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
             }
             else
             {
-                double u = out.pointlist[ i * 2 ];
-                double w = out.pointlist[ i * 2 + 1 ];
-
-                vec2d uwprime = vec2d( u, w );
-                uw = m_Surf->GetUW( uwprime );
+                uw = m_Surf->GetUW( points_out[i] );
             }
 
             vec3d pnt = m_Surf->CompPnt( uw.v[0], uw.v[1] );
             nodeVec.push_back( AddNode( pnt, uw ) );
         }
 
-        //==== Load Triangles if No New Point Created ====//
-        cnt = 0;
-        for ( i = 0; i < out.numberoftriangles; i++ )
+        //==== Load Triangles ====//
+        for ( i = 0; i < (int)connlist.size(); i++ )
         {
-            Node* n0 = nodeVec[out.trianglelist[cnt]];
+            Node* n0 = nodeVec[connlist[i][0]];
             Node* n1;
             Node* n2;
 
             if ( !m_Surf->GetFlipFlag() )
             {
-                n1 = nodeVec[out.trianglelist[cnt + 1]];
-                n2 = nodeVec[out.trianglelist[cnt + 2]];
+                n1 = nodeVec[connlist[i][1]];
+                n2 = nodeVec[connlist[i][2]];
             }
             else
             {
-                n1 = nodeVec[out.trianglelist[cnt + 2]];
-                n2 = nodeVec[out.trianglelist[cnt + 1]];
+                n1 = nodeVec[connlist[i][2]];
+                n2 = nodeVec[connlist[i][1]];
             }
-
-            cnt += 3;
 
             Edge* e0 = n0->FindEdge( n1 );
             if ( !e0 )
@@ -1881,7 +2054,7 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
                 e2 = AddEdge( n2, n0 );
             }
 
-            Face* face = AddFace( n0, n1, n2, e0, e1, e2 );
+            AddFace( n0, n1, n2, e0, e1, e2 );
         }
 
 
@@ -1889,6 +2062,9 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
         {
             Node* n0 = nodeVec[segs_indexes[j].m_Index[0]];
             Node* n1 = nodeVec[segs_indexes[j].m_Index[1]];
+
+            n0->pnt = segs_indexes[j].m_P[0];
+            n1->pnt = segs_indexes[j].m_P[1];
 
             Edge *e = n0->FindEdge( n1 );
 
@@ -1900,7 +2076,8 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
                 n1->fixed = true;
 
                 vec2d uw = segs_indexes[j].m_UWmid;
-                vec3d pnt = m_Surf->CompPnt( uw.v[0], uw.v[1] );
+                vec3d pnt = segs_indexes[j].m_Pmid;
+
                 Node* nsplit = AddNode( pnt, uw );
                 nsplit->fixed = true;
 
@@ -1935,46 +2112,40 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
 
         fprintf( fp, "clear all\nformat compact\n" );
         fprintf( fp, "t = [" );
-        for ( i = 0 ; i < out.numberoftriangles ; i++ )
+        for ( i = 0 ; i < (int)connlist.size() ; i++ )
         {
-            int ind0 = out.trianglelist[i * 3] + 1;
-            int ind1 = out.trianglelist[i * 3 + 1] + 1;
-            int ind2 = out.trianglelist[i * 3 + 2] + 1;
+            fprintf( fp, "%d, %d, %d", connlist[i][0] + 1, connlist[i][1] + 1, connlist[i][2] + 1 );
 
-            fprintf( fp, "%d, %d, %d", ind0, ind1, ind2 );
-
-            if ( i < out.numberoftriangles - 1 )
+            if ( i < (int)connlist.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
         }
 
         fprintf( fp, "uprm = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
-            fprintf( fp, "%f", out.pointlist[i * 2] );
+            fprintf( fp, "%f", points_out[i].x() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
-
         }
 
         fprintf( fp, "wprm = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
-            fprintf( fp, "%f", out.pointlist[i * 2 + 1] );
+            fprintf( fp, "%f", points_out[i].y() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
-
         }
 
         fprintf( fp, "u = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
             vec2d uw;
             if ( i < num_pnts )
@@ -1983,24 +2154,19 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
             }
             else
             {
-                double u = out.pointlist[ i * 2 ];
-                double w = out.pointlist[ i * 2 + 1 ];
-
-                vec2d uwprime = vec2d( u, w );
-                uw = m_Surf->GetUW( uwprime );
+                uw = m_Surf->GetUW( points_out[i] );
             }
-            double uu = uw.x();
 
-            fprintf( fp, "%f", uu );
+            fprintf( fp, "%f", uw.x() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
         }
 
         fprintf( fp, "w = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
             vec2d uw;
             if ( i < num_pnts )
@@ -2009,24 +2175,19 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
             }
             else
             {
-                double u = out.pointlist[ i * 2 ];
-                double w = out.pointlist[ i * 2 + 1 ];
-
-                vec2d uwprime = vec2d( u, w );
-                uw = m_Surf->GetUW( uwprime );
+                uw = m_Surf->GetUW( points_out[i] );
             }
-            double ww = uw.y();
 
-            fprintf( fp, "%f", ww );
+            fprintf( fp, "%f", uw.y() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
         }
 
         fprintf( fp, "x = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
             vec2d uw;
             if ( i < num_pnts )
@@ -2035,25 +2196,21 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
             }
             else
             {
-                double u = out.pointlist[ i * 2 ];
-                double w = out.pointlist[ i * 2 + 1 ];
-
-                vec2d uwprime = vec2d( u, w );
-                uw = m_Surf->GetUW( uwprime );
+                uw = m_Surf->GetUW( points_out[i] );
             }
 
             vec3d pnt = m_Surf->CompPnt( uw.v[0], uw.v[1] );
 
             fprintf( fp, "%f", pnt.x() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
         }
 
         fprintf( fp, "y = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
             vec2d uw;
             if ( i < num_pnts )
@@ -2062,25 +2219,21 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
             }
             else
             {
-                double u = out.pointlist[ i * 2 ];
-                double w = out.pointlist[ i * 2 + 1 ];
-
-                vec2d uwprime = vec2d( u, w );
-                uw = m_Surf->GetUW( uwprime );
+                uw = m_Surf->GetUW( points_out[i] );
             }
 
             vec3d pnt = m_Surf->CompPnt( uw.v[0], uw.v[1] );
 
             fprintf( fp, "%f", pnt.y() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
         }
 
         fprintf( fp, "z = [" );
-        for ( i = 0; i < out.numberofpoints; i++ )
+        for ( i = 0; i < (int)points_out.size(); i++ )
         {
             vec2d uw;
             if ( i < num_pnts )
@@ -2089,18 +2242,14 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
             }
             else
             {
-                double u = out.pointlist[ i * 2 ];
-                double w = out.pointlist[ i * 2 + 1 ];
-
-                vec2d uwprime = vec2d( u, w );
-                uw = m_Surf->GetUW( uwprime );
+                uw = m_Surf->GetUW( points_out[i] );
             }
 
             vec3d pnt = m_Surf->CompPnt( uw.v[0], uw.v[1] );
 
             fprintf( fp, "%f", pnt.z() );
 
-            if ( i < out.numberofpoints - 1 )
+            if ( i < (int)points_out.size() - 1 )
                 fprintf( fp, ";\n" );
             else
                 fprintf( fp, "];\n" );
@@ -2146,38 +2295,6 @@ void Mesh::InitMesh( vector< vec2d > & uw_points, vector< MeshSeg > & segs_index
 
 
 
-    //==== Free Local Memory ====//
-    if ( in.pointlist )
-    {
-        free( in.pointlist );
-    }
-    if ( in.segmentlist )
-    {
-        free( in.segmentlist );
-    }
-    if ( out.pointlist )
-    {
-        free( out.pointlist );
-    }
-    if ( out.pointmarkerlist )
-    {
-        free( out.pointmarkerlist );
-    }
-    if ( out.trianglelist )
-    {
-        free( out.trianglelist );
-    }
-    if ( out.segmentlist )
-    {
-        free( out.segmentlist );
-    }
-    if ( out.segmentmarkerlist )
-    {
-        free( out.segmentmarkerlist );
-    }
-
-    // cleanup
-    triangle_context_destroy( ctx );
 }
 
 void Mesh::RemoveInteriorFacesEdgesNodes()

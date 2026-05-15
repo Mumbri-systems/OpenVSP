@@ -121,7 +121,7 @@ BasicScreen::BasicScreen( ScreenMgr* mgr, int w, int h, const string & title, co
 {
     if ( h > MAX_WINDOW_PX_HEIGHT )
     {
-        printf( "Screen %s is too tall %d.\n", title.c_str(), h );
+        printf( "Screen %s is too tall.  Currently: %d.  Maximum: %d.\n", title.c_str(), h, MAX_WINDOW_PX_HEIGHT );
     }
 
     //==== Window ====//
@@ -5538,6 +5538,8 @@ void EngineModelScreen::BuildEngineGUI( GroupLayout & layout )
 
     layout.SetSameLineFlag( false );
 
+    layout.AddButton( m_EngineShowStationsToggle, "Show Stations", layout.GetW() * 0.5 );
+
     layout.AddYGap();
     layout.AddDividerBox( "Engine Representation" );
 
@@ -5640,6 +5642,7 @@ bool EngineModelScreen::Update( )
     m_EngineInModeChoice.Update( geomengine_ptr->m_EngineInModeType.GetID() );
     m_EngineOutModeChoice.Update( geomengine_ptr->m_EngineOutModeType.GetID() );
 
+    m_EngineShowStationsToggle.Update( geomengine_ptr->m_EngineShowStationsFlag.GetID() );
 
     // Deactivate choice entries based on type
     if ( geomengine_ptr->m_EngineGeomInType() != ENGINE_GEOM_FLOWTHROUGH )
