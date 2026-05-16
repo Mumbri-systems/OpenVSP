@@ -1,0 +1,11 @@
+--- a/src/vsp_aero/Viewer/CMakeLists.txt
++++ b/src/vsp_aero/Viewer/CMakeLists.txt
+@@ -108,7 +108,7 @@ IF( NOT VSP_NO_GRAPHICS )
+     ${OPENGL_LIBRARIES}
+   )
+ 
+-  INSTALL( TARGETS vspviewer RUNTIME DESTINATION . )
++  INSTALL( TARGETS vspviewer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+ 
+   IF( SWIG_FOUND AND PYTHONLIBS_FOUND )
+     INSTALL( TARGETS vspviewer RUNTIME DESTINATION python/openvsp/openvsp )

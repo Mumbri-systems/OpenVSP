@@ -1,0 +1,12 @@
+--- a/src/vsp_aero/Adb2Load/CMakeLists.txt
++++ b/src/vsp_aero/Adb2Load/CMakeLists.txt
+@@ -34,7 +34,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
+   TARGET_COMPILE_OPTIONS( vsploads PUBLIC -Wno-deprecated-declarations)
+ endif()
+ 
+-INSTALL( TARGETS vsploads RUNTIME DESTINATION . )
++INSTALL( TARGETS vsploads RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
+ 
+ 
+ IF( SWIG_FOUND AND PYTHONLIBS_FOUND )
+ 
