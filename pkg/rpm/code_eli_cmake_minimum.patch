@@ -1,0 +1,17 @@
+--- OpenVSP-OpenVSP_3.50.3/Libraries/cmake/External_CodeEli.cmake	2026-05-15 17:42:40.000000000 +0200
++++ OpenVSP-OpenVSP_3.50.3/Libraries/cmake/External_CodeEli.cmake.new	2026-05-16 09:43:14.463770628 +0200
+@@ -1,6 +1,7 @@
+ ExternalProject_Add( CODEELI
+ 	URL ${CMAKE_SOURCE_DIR}/Code-Eli-709ed73905b8.zip
+ 	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
++	PATCH_COMMAND sed -i.bak "s/cmake_minimum_required(VERSION 2.8)/cmake_minimum_required(VERSION 3.5)/" <SOURCE_DIR>/CMakeLists.txt
+ 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+ 		-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+ 		-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+@@ -11,4 +12,4 @@
+ 	INSTALL_COMMAND ""
+ )
+ ExternalProject_Get_Property( CODEELI BINARY_DIR SOURCE_DIR )
+-SET( CODEELI_INSTALL_DIR ${BINARY_DIR} ${SOURCE_DIR})
+\ Pas de fin de ligne à la fin du fichier
++SET( CODEELI_INSTALL_DIR ${BINARY_DIR} ${SOURCE_DIR})
