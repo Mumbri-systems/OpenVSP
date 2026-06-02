@@ -28,12 +28,13 @@ BuildRequires: mesa-libGL-devel, mesa-libGLU-devel
 BuildRequires: python3-numpy
 BuildRequires: stepcode, stepcode-devel
 BuildRequires: angelscript, angelscript-devel
+# BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
+BuildRequires: polyclipping2, polyclipping2-devel
 
 # The following libraries are currently bundled:
 # Angelscript : addons required in build, not available in system package
 # FLTK : build fails when using system Libraries
-# CPPTEST : build fails when using system Libraries
-# Clipper2 : in the process of being packaged for fedora
+# CPPTEST : build fails when using system Libraries due to obsolete version in repo
 # Code-Eli : OpenVSP is the only user of this library.  It is too obscure
 # to package
 # delabella : in the process of being packaged for fedora
@@ -57,6 +58,14 @@ This model can be processed into formats suitable for engineering analysis.
 %build
 # build third-party libraries
 pushd Libraries
+rm libxml2-2.9.10.tar.gz
+rm glm-0.9.9.8.zip
+rm glew-2.1.0.tgz
+rm cminpack-1.3.11.zip
+rm eigen-5.0.0.zip
+rm stepcode-28350d91294b.zip
+rm Clipper2-20bd69475f48.zip
+
 %cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DVSP_USE_SYSTEM_LIBXML2=true \
@@ -67,7 +76,10 @@ pushd Libraries
     -DVSP_USE_SYSTEM_EIGEN=true \
     -DVSP_USE_SYSTEM_STEPCODE=true \
     -DVSP_USE_SYSTEM_ANGELSCRIPT=false \
-    -DVSP_USE_SYSTEM_CPPTEST=false
+    -DVSP_USE_SYSTEM_CLIPPER2=true \
+    -DVSP_USE_SYSTEM_CPPTEST=false \
+    -DVSP_USE_SYSTEM_DELABELLA=false \
+    -DVSP_USE_SYSTEM_OPENABF=false
 %cmake_build
 popd
 
