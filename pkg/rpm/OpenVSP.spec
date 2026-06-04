@@ -135,9 +135,6 @@ pushd src
 %{_bindir}/vspaero_opt
 %{_bindir}/vspviewer
 %{_bindir}/vsploads
-%{_datadir}/openvsp/
-%{_datadir}/applications/openvsp.desktop
-%{_datadir}/icons/hicolor/scalable/apps/openvsp.png
 %{_prefix}/help/
 %{_prefix}/python/
 %{_datadir}/doc/VSP/
