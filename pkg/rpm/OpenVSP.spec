@@ -21,6 +21,7 @@ Patch5:   relative_install_paths5.patch
 Patch6:   update_stepcode_pointers.patch
 Patch7:   code_eli_cmake_minimum.patch
 BuildRequires: libxml2-devel >= 2.12.10, gcc-c++ >= 14.2.1-2, openjpeg-devel >= 2.5.4-1, glm-devel >= 1.0.1, cminpack-devel >= 1.3.8, glew-devel >= 2.2.0, swig >= 4.3.0, doxygen >= 1.14.0-5, graphviz >= 12, texlive-scheme-basic, python3-devel >= 3.13, conda >= 24
+BuildRequires: pyproject-rpm-macros
 BuildRequires:  cmake >= 3.31, gcc, gcc-c++, rpm-build >= 4
 BuildRequires: eigen3-devel
 #fltk-fluid, fltk-devel,
@@ -30,6 +31,8 @@ BuildRequires: stepcode, stepcode-devel
 BuildRequires: angelscript, angelscript-devel
 # BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
 BuildRequires: polyclipping2, polyclipping2-devel
+BuildRequires: desktop-file-utils
+Requires: hicolor-icon-theme
 
 # The following libraries are currently bundled:
 # Angelscript : addons required in build, not available in system package
@@ -43,6 +46,16 @@ BuildRequires: polyclipping2, polyclipping2-devel
 # OpenABF : in the process of being packaged for fedora
 # Pinocchio : not currently available
 # Triangle : modified for OpenVSP
+Provides: angelscript
+Provides: fltk
+Provides: cpptest
+Provides: Code-Eli
+Provides: delabella
+Provides: exprparse
+Provides: libiges
+Provides: openabf
+Provides: Pinocchio
+Provides: Triangle
 
 #stepcode is only available on x86_64 architecture
 ExclusiveArch: x86_64
@@ -52,11 +65,16 @@ OpenVSP is a parametric aircraft geometry tool. OpenVSP allows the user to
 create a 3D model of an aircraft defined by common engineering parameters.
 This model can be processed into formats suitable for engineering analysis.
 
+%package data
+Summary: Data files for %{name}
+BuildArch: noarch
+Requires: %{name} = %{version}-%{release}
+
+%description data
+Data files for OpenVSP.
+
 %prep
 %autosetup -n OpenVSP-%{name}_%{version} -p1
-
-%build
-# build third-party libraries
 pushd Libraries
 rm libxml2-2.9.10.tar.gz
 rm glm-0.9.9.8.zip
@@ -66,6 +84,9 @@ rm eigen-5.0.0.zip
 rm stepcode-28350d91294b.zip
 rm Clipper2-20bd69475f48.zip
 
+%build
+# build third-party libraries
+pushd Libraries
 %cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DVSP_USE_SYSTEM_LIBXML2=true \
@@ -95,11 +116,17 @@ pushd src
 %install
 pushd src
 %cmake_install
-install -Dm 644 %{_sourcedir}/openvsp.desktop %{buildroot}%{_datadir}/applications/openvsp.desktop
+desktop-file-install \
+--dir=%{buildroot}%{_datadir}/applications \
+%{SOURCE1}
 install -Dm 644 %{_builddir}/OpenVSP-%{name}_%{version}/vspIcon.png %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/openvsp.png
 # Remove git placeholder files
 find %{buildroot} -name ".keep" -delete
 chmod 755 %{buildroot}%{_prefix}/python/openvsp/conda-recipe/build.sh
+
+%check
+pushd src
+%ctest --exclude-regex "PyTest|PySampleCodeTest|PyDegenGeomTest"
 
 %files
 %{_bindir}/vsp
@@ -116,6 +143,11 @@ chmod 755 %{buildroot}%{_prefix}/python/openvsp/conda-recipe/build.sh
 %{_datadir}/doc/VSP/
 %doc README.md
 %license LICENSE
+
+%files data
+%{_datadir}/openvsp/
+%{_datadir}/applications/openvsp.desktop
+%{_datadir}/icons/hicolor/scalable/apps/openvsp.png
 
 %changelog
 %autochangelog
