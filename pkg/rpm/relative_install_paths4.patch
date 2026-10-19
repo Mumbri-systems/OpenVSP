@@ -1,6 +1,8 @@
+diff --git a/src/vsp_aero/Solver/CMakeLists.txt b/src/vsp_aero/Solver/CMakeLists.txt
+index 337e90cef..91790c07d 100755
 --- a/src/vsp_aero/Solver/CMakeLists.txt
 +++ b/src/vsp_aero/Solver/CMakeLists.txt
-@@ -204,7 +204,7 @@ if ( is_multi_config )
+@@ -204,18 +204,18 @@ if ( is_multi_config )
          SET( conf_suffix "$<CONFIG>/" )
  endif()
  
@@ -9,8 +11,9 @@
  
  add_custom_command(TARGET vspaero POST_BUILD
          COMMAND ${CMAKE_COMMAND} -E copy
-@@ -212,7 +212,7 @@ add_custom_command(TARGET vspaero POST_BUILD
-         ${CMAKE_BINARY_DIR}/src/vsp/${conf_suffix}$<TARGET_FILE_NAME:vspaero> )
+         $<TARGET_FILE:vspaero>
+-        ${VSP_BINARY_DIR}/vsp/${conf_suffix}$<TARGET_FILE_NAME:vspaero> )
++        ${CMAKE_BINARY_DIR}/src/vsp/${conf_suffix}$<TARGET_FILE_NAME:vspaero> )
  
  IF( NOT VSP_NO_VSPAERO_OPT )
 -  INSTALL( TARGETS vspaero_opt RUNTIME DESTINATION . )
@@ -18,3 +21,7 @@
  
    add_custom_command(TARGET vspaero_opt POST_BUILD
            COMMAND ${CMAKE_COMMAND} -E copy
+           $<TARGET_FILE:vspaero_opt>
+-          ${VSP_BINARY_DIR}/vsp/${conf_suffix}$<TARGET_FILE_NAME:vspaero_opt> )
++          ${CMAKE_BINARY_DIR}/src/vsp/${conf_suffix}$<TARGET_FILE_NAME:vspaero_opt> )
+ ENDIF()

@@ -1,25 +1,22 @@
 %global _duplicate_files_terminate_build 0
-%global commit 5c366ec7530fdd6e64deea3f5669bba0c50f41ee
+%global commit 5240ef210f41c5d6aeed0ba7687f6fab0ca0cafb
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global commitdate 20260515
-%global min_version 3.50.3
+%global commitdate 20261012
+%global min_version 3.55.0
 
 Name:     OpenVSP
-Version:  3.50.3
+Version:  3.55.0
 Release:  %autorelease
 Summary:  A parametric aircraft geometry tool
 License:  NASA-1.3
 URL:      https://www.openvsp.org
 Source:   https://github.com/OpenVSP/OpenVSP/archive/refs/tags/%{name}_%{version}.tar.gz
 Source1:  openvsp.desktop
-Patch0:   find_shared_libs.patch
 Patch1:   relative_install_paths1.patch
 Patch2:   relative_install_paths2.patch
 Patch3:   relative_install_paths3.patch
 Patch4:   relative_install_paths4.patch
 Patch5:   relative_install_paths5.patch
-Patch6:   update_stepcode_pointers.patch
-Patch7:   code_eli_cmake_minimum.patch
 BuildRequires: libxml2-devel >= 2.12.10, gcc-c++ >= 14.2.1-2, openjpeg-devel >= 2.5.4-1, glm-devel >= 1.0.1, cminpack-devel >= 1.3.8, glew-devel >= 2.2.0, swig >= 4.3.0, doxygen >= 1.14.0-5, graphviz >= 12, texlive-scheme-basic, python3-devel >= 3.13, conda >= 24
 BuildRequires: pyproject-rpm-macros
 BuildRequires:  cmake >= 3.31, gcc, gcc-c++, rpm-build >= 4
@@ -29,33 +26,29 @@ BuildRequires: mesa-libGL-devel, mesa-libGLU-devel
 BuildRequires: python3-numpy
 BuildRequires: stepcode, stepcode-devel
 BuildRequires: angelscript, angelscript-devel
-# BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
+BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
 BuildRequires: polyclipping2, polyclipping2-devel
 BuildRequires: desktop-file-utils
+BuildRequires: delabella, delabella-devel
+BuildRequires: openabf-devel
 Requires: hicolor-icon-theme
 
 # The following libraries are currently bundled:
 # Angelscript : addons required in build, not available in system package
 # FLTK : build fails when using system Libraries
-# CPPTEST : build fails when using system Libraries due to obsolete version in repo
 # Code-Eli : OpenVSP is the only user of this library.  It is too obscure
 # to package
-# delabella : in the process of being packaged for fedora
 # exprparse : not currently available
 # libIGES : modified for OpenVSP
-# OpenABF : in the process of being packaged for fedora
 # Pinocchio : not currently available
 # Triangle : modified for OpenVSP
-Provides: angelscript
-Provides: fltk
-Provides: cpptest
-Provides: Code-Eli
-Provides: delabella
-Provides: exprparse
-Provides: libiges
-Provides: openabf
-Provides: Pinocchio
-Provides: Triangle
+Provides: angelscript = 2.38
+Provides: fltk = 1.4.5
+Provides: Code-Eli = 0.3.6^20261005gitc64fbef
+Provides: exprparse = 0.1.0^20250414git332e580
+Provides: libiges = 0.3^20261012git886bf8b
+Provides: Pinocchio = 1.0.0^20260718git86efdc0
+Provides: Triangle = 1.6^20261005git8df5a02
 
 #stepcode is only available on x86_64 architecture
 ExclusiveArch: x86_64
@@ -76,13 +69,16 @@ Data files for OpenVSP.
 %prep
 %autosetup -n OpenVSP-%{name}_%{version} -p1
 pushd Libraries
-rm libxml2-2.9.10.tar.gz
-rm glm-0.9.9.8.zip
-rm glew-2.1.0.tgz
-rm cminpack-1.3.11.zip
-rm eigen-5.0.0.zip
-rm stepcode-28350d91294b.zip
-rm Clipper2-20bd69475f48.zip
+rm libxml2-2*.tar.xz
+rm glm-0.9*.zip
+rm glew-2*.tgz
+rm cminpack-1*.zip
+rm eigen-5*.zip
+rm stepcode*.zip
+rm Clipper2*.zip
+rm OpenABF*.zip
+rm cpptest*.tar.gz
+rm delabella*.zip
 
 %build
 # build third-party libraries
@@ -98,9 +94,9 @@ pushd Libraries
     -DVSP_USE_SYSTEM_STEPCODE=true \
     -DVSP_USE_SYSTEM_ANGELSCRIPT=false \
     -DVSP_USE_SYSTEM_CLIPPER2=true \
-    -DVSP_USE_SYSTEM_CPPTEST=false \
-    -DVSP_USE_SYSTEM_DELABELLA=false \
-    -DVSP_USE_SYSTEM_OPENABF=false
+    -DVSP_USE_SYSTEM_CPPTEST=true \
+    -DVSP_USE_SYSTEM_DELABELLA=true \
+    -DVSP_USE_SYSTEM_OPENABF=true
 %cmake_build
 popd
 
