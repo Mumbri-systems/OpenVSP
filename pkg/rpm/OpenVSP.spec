@@ -29,7 +29,7 @@ BuildRequires: angelscript, angelscript-devel
 BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
 BuildRequires: polyclipping2, polyclipping2-devel
 BuildRequires: desktop-file-utils
-#BuildRequires: delabella, delabella-devel
+BuildRequires: delabella, delabella-devel
 BuildRequires: openabf-devel
 Requires: hicolor-icon-theme
 
