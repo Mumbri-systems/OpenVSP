@@ -29,7 +29,7 @@ BuildRequires: angelscript, angelscript-devel
 BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
 BuildRequires: polyclipping2, polyclipping2-devel
 BuildRequires: desktop-file-utils
-BuildRequires: delabella, delabella-devel
+#BuildRequires: delabella, delabella-devel
 BuildRequires: openabf-devel
 Requires: hicolor-icon-theme
 
@@ -68,17 +68,7 @@ Data files for OpenVSP.
 
 %prep
 %autosetup -n OpenVSP-%{name}_%{version} -p1
-pushd Libraries
-rm libxml2-2*.tar.xz
-rm glm-0.9*.zip
-rm glew-2*.tgz
-rm cminpack-1*.zip
-rm eigen-5*.zip
-rm stepcode*.zip
-rm Clipper2*.zip
-rm OpenABF*.zip
-rm cpptest*.tar.gz
-rm delabella*.zip
+
 
 %build
 # build third-party libraries
@@ -95,7 +85,7 @@ pushd Libraries
     -DVSP_USE_SYSTEM_ANGELSCRIPT=false \
     -DVSP_USE_SYSTEM_CLIPPER2=true \
     -DVSP_USE_SYSTEM_CPPTEST=true \
-    -DVSP_USE_SYSTEM_DELABELLA=true \
+    -DVSP_USE_SYSTEM_DELABELLA=false \
     -DVSP_USE_SYSTEM_OPENABF=true
 %cmake_build
 popd
