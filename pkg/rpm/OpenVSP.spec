@@ -30,7 +30,7 @@ BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
 BuildRequires: polyclipping2, polyclipping2-devel
 BuildRequires: desktop-file-utils
 #BuildRequires: delabella, delabella-devel
-BuildRequires: openabf-devel
+#BuildRequires: openabf-devel
 Requires: hicolor-icon-theme
 
 # The following libraries are currently bundled:
@@ -86,7 +86,7 @@ pushd Libraries
     -DVSP_USE_SYSTEM_CLIPPER2=true \
     -DVSP_USE_SYSTEM_CPPTEST=true \
     -DVSP_USE_SYSTEM_DELABELLA=false \
-    -DVSP_USE_SYSTEM_OPENABF=true
+    -DVSP_USE_SYSTEM_OPENABF=false
 %cmake_build
 popd
 
