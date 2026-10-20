@@ -27,7 +27,7 @@ BuildRequires: python3-numpy
 BuildRequires: stepcode, stepcode-devel
 BuildRequires: angelscript, angelscript-devel
 BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
-#BuildRequires: polyclipping2, polyclipping2-devel
+BuildRequires: polyclipping2, polyclipping2-devel
 BuildRequires: desktop-file-utils
 BuildRequires: delabella, delabella-devel
 BuildRequires: openabf-devel
@@ -83,7 +83,7 @@ pushd Libraries
     -DVSP_USE_SYSTEM_EIGEN=true \
     -DVSP_USE_SYSTEM_STEPCODE=true \
     -DVSP_USE_SYSTEM_ANGELSCRIPT=false \
-    -DVSP_USE_SYSTEM_CLIPPER2=false \
+    -DVSP_USE_SYSTEM_CLIPPER2=true \
     -DVSP_USE_SYSTEM_CPPTEST=true \
     -DVSP_USE_SYSTEM_DELABELLA=true \
     -DVSP_USE_SYSTEM_OPENABF=true
