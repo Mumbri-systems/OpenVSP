@@ -72,13 +72,13 @@ Data files for OpenVSP.
 %autosetup -n OpenVSP-%{name}_%{version} -p1
 
 %generate_buildrequires
-%pyproject_buildrequires -d src/python_api/packages/vsp_airfoils
-%pyproject_buildrequires -d src/python_api/packages/utilities
-%pyproject_buildrequires -d src/python_api/packages/degen_geom
-%pyproject_buildrequires -d src/python_api/packages/openvsp_config
-%pyproject_buildrequires -d src/python_api/packages/CHARM
-%pyproject_buildrequires -d src/python_api/packages/AvlPy
-%pyproject_buildrequires -d src/python_api/packages/pyPMARC
+%pyproject_buildrequires -R -d src/python_api/packages/vsp_airfoils
+%pyproject_buildrequires -R -d src/python_api/packages/utilities
+%pyproject_buildrequires -R -d src/python_api/packages/degen_geom
+%pyproject_buildrequires -R -d src/python_api/packages/openvsp_config
+%pyproject_buildrequires -R -d src/python_api/packages/CHARM
+%pyproject_buildrequires -R -d src/python_api/packages/AvlPy
+%pyproject_buildrequires -R -d src/python_api/packages/pyPMARC
 
 
 %build
