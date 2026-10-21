@@ -29,7 +29,7 @@ index 6edea3f8a..1a5eff2c8 100644
 +        ${CMAKE_BINARY_DIR}/src/vsp/help/${conf_suffix}$ )
  
 -INSTALL( FILES ${CMAKE_CURRENT_SOURCE_DIR}/vsp_help DESTINATION help )
-+INSTALL( FILES ${CMAKE_CURRENT_SOURCE_DIR}/vsp_help ${CMAKE_INSTALL_DATADIR}/openvsp/DESTINATION help )
++INSTALL( FILES ${CMAKE_CURRENT_SOURCE_DIR}/vsp_help DESTINATION ${CMAKE_INSTALL_DATADIR}/openvsp/help )
  
  ADD_CUSTOM_TARGET ( copy_help_marker ALL
          COMMAND ${CMAKE_COMMAND} -E copy
