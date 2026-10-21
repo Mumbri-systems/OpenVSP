@@ -24,6 +24,8 @@ BuildRequires: eigen3-devel
 #fltk-fluid, fltk-devel,
 BuildRequires: mesa-libGL-devel, mesa-libGLU-devel
 BuildRequires: python3-numpy
+BuildRequires: python3-pytest
+BuildRequires: python3-matplotlib
 BuildRequires: stepcode, stepcode-devel
 BuildRequires: angelscript, angelscript-devel
 BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
@@ -77,9 +79,7 @@ Data files for OpenVSP.
 %pyproject_buildrequires -d src/python_api/packages/CHARM
 %pyproject_buildrequires -d src/python_api/packages/AvlPy
 %pyproject_buildrequires -d src/python_api/packages/pyPMARC
-%pyproject_buildrequires pytest
-%pyproject_buildrequires matplotlib
-%pyproject_buildrequires pathlib
+
 
 %build
 # build third-party libraries
