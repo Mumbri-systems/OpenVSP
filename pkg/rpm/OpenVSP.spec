@@ -139,7 +139,7 @@ pushd src
 %{_bindir}/vspaero_opt
 %{_bindir}/vspviewer
 %{_bindir}/vsploads
-%{_bindir}/help/
+%{_datadir}/openvsp/help/
 %{_datadir}/doc/VSP/
 %doc README.md
 %license LICENSE
