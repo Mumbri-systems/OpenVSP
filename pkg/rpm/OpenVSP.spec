@@ -10,7 +10,7 @@ Name:     OpenVSP
 Version:  3.55.0
 Release:  %autorelease
 Summary:  A parametric aircraft geometry tool
-License:  NASA-1.3 AND BSL-1.0 AND Apache-2.0 AND MIT AND MPL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND GPL-2.0-or-later AND GPL-3.0-or-later AND MIT-Khronos-old
+License:  NASA-1.3 AND BSL-1.0 AND Apache-2.0 AND MIT AND MPL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND GPL-2.0-or-later AND GPL-3.0-or-later AND MIT-Khronos-old AND LGPL-2.1-only AND EPL-1.0
 URL:      https://www.openvsp.org
 Source:   https://github.com/OpenVSP/OpenVSP/archive/refs/tags/%{name}_%{version}.tar.gz
 Source1:  openvsp.desktop
@@ -126,6 +126,14 @@ install -Dm 644 %{_builddir}/OpenVSP-%{name}_%{version}/vspIcon.png %{buildroot}
 # Remove git placeholder files
 find %{buildroot} -name ".keep" -delete
 #chmod 755 %{buildroot}%{_prefix}/python/openvsp/conda-recipe/build.sh
+popd
+
+#install bundled licenses
+%license Libraries/redhat-linux-build/CODEELI-prefix/LICENSE.txt LICENSE.code-eli
+%license Libraries/redhat-linux-build/EXPRPARSE-prefix/LICENSE LICENSE.exprparse
+%license Libraries/redhat-linux-build/LIBIGES-prefix/LICENSE LICENSE.libiges
+%license Libraries/redhat-linux-build/TRIANGLE-prefix/LICENSE LICENSE.triangle
+
 
 %check
 pushd src
@@ -143,6 +151,7 @@ pushd src
 %{_datadir}/doc/VSP/
 %doc README.md
 %license LICENSE
+%license 
 
 %files data
 %{_datadir}/openvsp/
