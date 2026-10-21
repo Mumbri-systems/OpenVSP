@@ -10,7 +10,7 @@ Name:     OpenVSP
 Version:  3.55.0
 Release:  %autorelease
 Summary:  A parametric aircraft geometry tool
-License:  NASA-1.3
+License:  NASA-1.3 AND BSL-1.0 AND Apache-2.0 AND MIT AND MPL-2.0 AND BSD-2-Clause AND BSD-3-Clause AND GPL-2.0-or-later AND GPL-3.0-or-later AND MIT-Khronos-old
 URL:      https://www.openvsp.org
 Source:   https://github.com/OpenVSP/OpenVSP/archive/refs/tags/%{name}_%{version}.tar.gz
 Source1:  openvsp.desktop
