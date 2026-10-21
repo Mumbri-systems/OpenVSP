@@ -73,7 +73,17 @@ Data files for OpenVSP.
 
 %prep
 %autosetup -n OpenVSP-%{name}_%{version} -p1
-
+pushd Libraries
+rm libxml2-2*.tar.xz
+rm glm-0.9*.zip
+rm glew-2*.tgz
+rm cminpack-1*.zip
+rm eigen-5*.zip
+rm stepcode*.zip
+rm Clipper2*.zip
+rm OpenABF*.zip
+rm cpptest*.tar.gz
+rm delabella*.zip
 
 
 %build
