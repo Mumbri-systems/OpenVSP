@@ -114,7 +114,7 @@ desktop-file-install \
 install -Dm 644 %{_builddir}/OpenVSP-%{name}_%{version}/vspIcon.png %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/openvsp.png
 # Remove git placeholder files
 find %{buildroot} -name ".keep" -delete
-chmod 755 %{buildroot}%{_prefix}/python/openvsp/conda-recipe/build.sh
+#chmod 755 %{buildroot}%{_prefix}/python/openvsp/conda-recipe/build.sh
 
 %check
 pushd src
@@ -129,7 +129,7 @@ pushd src
 %{_bindir}/vspviewer
 %{_bindir}/vsploads
 %{_prefix}/help/
-%{_prefix}/python/
+#%{_prefix}/python/
 %{_datadir}/doc/VSP/
 %doc README.md
 %license LICENSE
