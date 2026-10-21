@@ -19,6 +19,7 @@ Patch2:   relative_install_paths2.patch
 Patch3:   relative_install_paths3.patch
 Patch4:   relative_install_paths4.patch
 Patch5:   relative_install_paths5.patch
+Patch6:   relative_install_paths6.patch
 BuildRequires: libxml2-devel >= 2.12.10, gcc-c++ >= 14.2.1-2, openjpeg-devel >= 2.5.4-1, glm-devel >= 1.0.1, cminpack-devel >= 1.3.8, glew-devel >= 2.2.0, swig >= 4.3.0, doxygen >= 1.14.0-5, graphviz >= 12, texlive-scheme-basic
 BuildRequires:  cmake >= 3.31, gcc, gcc-c++, rpm-build >= 4
 BuildRequires: eigen3-devel
@@ -138,7 +139,7 @@ pushd src
 %{_bindir}/vspaero_opt
 %{_bindir}/vspviewer
 %{_bindir}/vsploads
-%{_prefix}/help/
+%{_bindir}/help/
 #%{_prefix}/python/
 %{_datadir}/doc/VSP/
 %doc README.md
