@@ -74,7 +74,6 @@ Data files for OpenVSP.
 %pyproject_buildrequires -d src/python_api/packages/utilities
 %pyproject_buildrequires -d src/python_api/packages/degen_geom
 %pyproject_buildrequires -d src/python_api/packages/openvsp_config
-%pyproject_buildrequires -d src/python_api/packages/openvsp
 %pyproject_buildrequires -d src/python_api/packages/CHARM
 %pyproject_buildrequires -d src/python_api/packages/AvlPy
 %pyproject_buildrequires -d src/python_api/packages/pyPMARC
