@@ -70,7 +70,7 @@ Data files for OpenVSP.
 %autosetup -n OpenVSP-%{name}_%{version} -p1
 
 %generate_buildrequires
-%pyproject_buildrequires src/python_api/packages/requirements-dev.txt
+%pyproject_buildrequires -N src/python_api/packages/requirements-dev.txt
 
 %build
 # build third-party libraries
