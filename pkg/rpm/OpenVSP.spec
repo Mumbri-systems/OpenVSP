@@ -19,15 +19,16 @@ Patch2:   relative_install_paths2.patch
 Patch3:   relative_install_paths3.patch
 Patch4:   relative_install_paths4.patch
 Patch5:   relative_install_paths5.patch
-BuildRequires: libxml2-devel >= 2.12.10, gcc-c++ >= 14.2.1-2, openjpeg-devel >= 2.5.4-1, glm-devel >= 1.0.1, cminpack-devel >= 1.3.8, glew-devel >= 2.2.0, swig >= 4.3.0, doxygen >= 1.14.0-5, graphviz >= 12, texlive-scheme-basic, python3-devel >= 3.13, conda >= 24
-BuildRequires: pyproject-rpm-macros
+BuildRequires: libxml2-devel >= 2.12.10, gcc-c++ >= 14.2.1-2, openjpeg-devel >= 2.5.4-1, glm-devel >= 1.0.1, cminpack-devel >= 1.3.8, glew-devel >= 2.2.0, swig >= 4.3.0, doxygen >= 1.14.0-5, graphviz >= 12, texlive-scheme-basic
 BuildRequires:  cmake >= 3.31, gcc, gcc-c++, rpm-build >= 4
 BuildRequires: eigen3-devel
 #fltk-fluid, fltk-devel,
 BuildRequires: mesa-libGL-devel, mesa-libGLU-devel
-BuildRequires: python3-numpy
-BuildRequires: python3-pytest
-BuildRequires: python3-matplotlib
+#BuildRequires: pyproject-rpm-macros
+#BuildRequires: python3-devel >= 3.13, conda >= 24
+#BuildRequires: python3-numpy
+#BuildRequires: python3-pytest
+#BuildRequires: python3-matplotlib
 BuildRequires: stepcode, stepcode-devel
 BuildRequires: angelscript, angelscript-devel
 BuildRequires: cpptest >= 2.0.0, cpptest-devel >= 2.0.0
@@ -73,10 +74,6 @@ Data files for OpenVSP.
 %prep
 %autosetup -n OpenVSP-%{name}_%{version} -p1
 
-%generate_buildrequires
-for p in %{py_static_pkgs} %{py_tools}; do
-    %pyproject_buildrequires -R -d src/python_api/packages/$p
-done
 
 
 %build
@@ -101,34 +98,15 @@ popd
 
 # build main
 pushd src
-# build pyprojects
-pushd python_api/packages
-for p in %{py_static_pkgs} %{py_tools}; do
-    pushd $p
-    %pyproject_wheel
-    popd
-done
-popd
 %cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DVSP_INSTALL_TO_SYSTEM=ON \
     -DVSP_LIBRARY_PATH=%{_builddir}/OpenVSP-%{name}_%{version}/Libraries/redhat-linux-build
 %cmake_build
-# openvsp: setup.py only exists after %cmake configure_file()
-pushd python_api/packages/openvsp
-%pyproject_wheel
-popd
 
 %install
 pushd src
-pushd python_api/packages
-for p in %{py_static_pkgs} %{py_tools} openvsp; do
-    pushd $p
-    %pyproject_install
-    popd
-done
-popd
 %cmake_install
 desktop-file-install \
 --dir=%{buildroot}%{_datadir}/applications \
