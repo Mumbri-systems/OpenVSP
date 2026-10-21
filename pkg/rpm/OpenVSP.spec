@@ -140,7 +140,6 @@ pushd src
 %{_bindir}/vspviewer
 %{_bindir}/vsploads
 %{_bindir}/help/
-#%{_prefix}/python/
 %{_datadir}/doc/VSP/
 %doc README.md
 %license LICENSE
