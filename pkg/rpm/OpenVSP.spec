@@ -133,7 +133,13 @@ popd
 %license Libraries/redhat-linux-build/EXPRPARSE-prefix/LICENSE LICENSE.exprparse
 %license Libraries/redhat-linux-build/LIBIGES-prefix/LICENSE LICENSE.libiges
 %license Libraries/redhat-linux-build/TRIANGLE-prefix/LICENSE LICENSE.triangle
-
+#install secondary licenses
+%license src/external/pcg-cpp/LICENSE-APACHE.txt LICENSE.pcg-cpp
+%license src/external/libigl/libigl/LICENSE.GPL LICENSE.libigl1
+%license src/external/libigl/libigl/LICENSE.MPL2 LICENSE.libigl2
+%license src/python_api/packages/LICENSE LICENSE.pyvsp
+%license src/python_api/packages/CHARM/LICENSE LICENSE.charm
+%license src/external/GeometricTools/GeometricTools/LICENSE LICENSE.geometrictools
 
 %check
 pushd src
@@ -150,8 +156,7 @@ pushd src
 %{_datadir}/openvsp/help/
 %{_datadir}/doc/VSP/
 %doc README.md
-%license LICENSE
-%license 
+%license LICENSE #main
 
 %files data
 %{_datadir}/openvsp/
