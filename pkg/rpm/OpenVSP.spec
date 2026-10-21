@@ -49,7 +49,7 @@ Requires: hicolor-icon-theme
 # Pinocchio : not currently available
 # Triangle : modified for OpenVSP
 Provides: bundled(angelscript) = 2.38
-Provides: bundled(fltk) = 1.4.5)
+Provides: bundled(fltk) = 1.4.5
 Provides: bundled(Code-Eli) = 0.3.6^20261005gitc64fbef
 Provides: bundled(exprparse) = 0.1.0^20250414git332e580
 Provides: bundled(libiges) = 0.3^20261012git886bf8b
