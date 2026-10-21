@@ -48,13 +48,13 @@ Requires: hicolor-icon-theme
 # libIGES : modified for OpenVSP
 # Pinocchio : not currently available
 # Triangle : modified for OpenVSP
-Provides: bundled(angelscript = 2.38)
-Provides: bundled(fltk = 1.4.5)
-Provides: bundled(Code-Eli = 0.3.6^20261005gitc64fbef)
-Provides: bundled(exprparse = 0.1.0^20250414git332e580)
-Provides: bundled(libiges = 0.3^20261012git886bf8b)
-Provides: bundled(Pinocchio = 1.0.0^20260718git86efdc0)
-Provides: bundled(Triangle = 1.6^20261005git8df5a02)
+Provides: bundled(angelscript) = 2.38
+Provides: bundled(fltk) = 1.4.5)
+Provides: bundled(Code-Eli) = 0.3.6^20261005gitc64fbef
+Provides: bundled(exprparse) = 0.1.0^20250414git332e580
+Provides: bundled(libiges) = 0.3^20261012git886bf8b
+Provides: bundled(Pinocchio) = 1.0.0^20260718git86efdc0
+Provides: bundled(Triangle) = 1.6^20261005git8df5a02
 
 #stepcode is only available on x86_64 architecture
 ExclusiveArch: x86_64
