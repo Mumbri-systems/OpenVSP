@@ -3,6 +3,8 @@
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 %global commitdate 20261012
 %global min_version 3.55.0
+%global py_static_pkgs degen_geom utilities openvsp_config vsp_airfoils
+%global py_tools       CHARM AvlPy pyPMARC
 
 Name:     OpenVSP
 Version:  3.55.0
@@ -72,13 +74,9 @@ Data files for OpenVSP.
 %autosetup -n OpenVSP-%{name}_%{version} -p1
 
 %generate_buildrequires
-%pyproject_buildrequires -R -d src/python_api/packages/vsp_airfoils
-%pyproject_buildrequires -R -d src/python_api/packages/utilities
-%pyproject_buildrequires -R -d src/python_api/packages/degen_geom
-%pyproject_buildrequires -R -d src/python_api/packages/openvsp_config
-%pyproject_buildrequires -R -d src/python_api/packages/CHARM
-%pyproject_buildrequires -R -d src/python_api/packages/AvlPy
-%pyproject_buildrequires -R -d src/python_api/packages/pyPMARC
+for p in %{py_static_pkgs} %{py_tools}; do
+    %pyproject_buildrequires -R -d src/python_api/packages/$p
+done
 
 
 %build
@@ -103,17 +101,34 @@ popd
 
 # build main
 pushd src
-%pyproject_wheel
+# build pyprojects
+pushd python_api/packages
+for p in %{py_static_pkgs} %{py_tools}; do
+    pushd $p
+    %pyproject_wheel
+    popd
+done
+popd
 %cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DVSP_INSTALL_TO_SYSTEM=ON \
     -DVSP_LIBRARY_PATH=%{_builddir}/OpenVSP-%{name}_%{version}/Libraries/redhat-linux-build
 %cmake_build
+# openvsp: setup.py only exists after %cmake configure_file()
+pushd python_api/packages/openvsp
+%pyproject_wheel
+popd
 
 %install
 pushd src
-%pyproject_install
+pushd python_api/packages
+for p in %{py_static_pkgs} %{py_tools} openvsp; do
+    pushd $p
+    %pyproject_install
+    popd
+done
+popd
 %cmake_install
 desktop-file-install \
 --dir=%{buildroot}%{_datadir}/applications \
