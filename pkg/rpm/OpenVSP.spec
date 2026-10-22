@@ -130,6 +130,8 @@ find %{buildroot} -name ".keep" -delete
 popd
 
 #install bundled licenses
+pwd
+ls Libraries/redhat-linux-build/CODEELI-prefix/
 install -Dm644 Libraries/redhat-linux-build/CODEELI-prefix/LICENSE.txt %{buildroot}%{_licensedir}/%{name}/LICENSE.code-eli
 install -Dm644 Libraries/redhat-linux-build/EXPRPARSE-prefix/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.exprparse
 install -Dm644 Libraries/redhat-linux-build/LIBIGES-prefix/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.libiges
