@@ -131,11 +131,11 @@ popd
 
 #install bundled licenses
 pwd
-ls Libraries/redhat-linux-build/CODEELI-prefix/src/
-install -Dm644 Libraries/redhat-linux-build/CODEELI-prefix/src/LICENSE.txt %{buildroot}%{_licensedir}/%{name}/LICENSE.code-eli
-install -Dm644 Libraries/redhat-linux-build/EXPRPARSE-prefix/src/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.exprparse
-install -Dm644 Libraries/redhat-linux-build/LIBIGES-prefix/src/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.libiges
-install -Dm644 Libraries/redhat-linux-build/TRIANGLE-prefix/src/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.triangle
+ls Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/
+install -Dm644 Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/LICENSE.txt %{buildroot}%{_licensedir}/%{name}/LICENSE.code-eli
+install -Dm644 Libraries/redhat-linux-build/EXPRPARSE-prefix/src/EXPRPARSE/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.exprparse
+install -Dm644 Libraries/redhat-linux-build/LIBIGES-prefix/src/LIBIGES/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.libiges
+install -Dm644 Libraries/redhat-linux-build/TRIANGLE-prefix/src/TRIANGLE/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.triangle
 #install secondary licenses
 install -Dm644 src/external/pcg-cpp/LICENSE-APACHE.txt %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.pcg-cpp
 install -Dm644 src/external/libigl/libigl/LICENSE.GPL %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.libigl1
