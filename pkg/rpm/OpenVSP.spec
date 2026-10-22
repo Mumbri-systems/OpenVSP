@@ -129,19 +129,6 @@ find %{buildroot} -name ".keep" -delete
 #chmod 755 %{buildroot}%{_prefix}/python/openvsp/conda-recipe/build.sh
 popd
 
-#install bundled licenses
-install -Dm644 Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/LICENSE.txt %{buildroot}%{_licensedir}/%{name}/LICENSE.code-eli
-install -Dm644 Libraries/redhat-linux-build/EXPRPARSE-prefix/src/EXPRPARSE/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.exprparse
-install -Dm644 Libraries/redhat-linux-build/LIBIGES-prefix/src/LIBIGES/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.libiges
-install -Dm644 Libraries/redhat-linux-build/TRIANGLE-prefix/src/TRIANGLE/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.triangle
-#install secondary licenses
-install -Dm644 src/external/pcg-cpp/LICENSE-APACHE.txt %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.pcg-cpp
-install -Dm644 src/external/libigl/libigl/LICENSE.GPL %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.libigl1
-install -Dm644 src/external/libigl/libigl/LICENSE.MPL2 %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.libigl2
-install -Dm644 src/python_api/packages/LICENSE %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.pyvsp
-install -Dm644 src/python_api/packages/CHARM/LICENSE %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.charm
-install -Dm644 src/external/GeometricTools/GeometricTools/LICENSE %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.geometrictools
-
 %check
 pushd src
 %ctest --exclude-regex "PyTest|PySampleCodeTest|ScriptSampleCodeTest|AnalysisVSPAERO|PyDegenGeomTest"
@@ -159,8 +146,18 @@ pushd src
 %doc README.md
 # main license
 %license LICENSE
-# all others
-%license LICENSE.*
+#install bundled licenses
+%license Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/LICENSE.txt LICENSE.code-eli
+%license Libraries/redhat-linux-build/EXPRPARSE-prefix/src/EXPRPARSE/LICENSE LICENSE.exprparse
+%license Libraries/redhat-linux-build/LIBIGES-prefix/src/LIBIGES/LICENSE LICENSE.libiges
+%license Libraries/redhat-linux-build/TRIANGLE-prefix/src/TRIANGLE/LICENSE LICENSE.triangle
+#install secondary licenses
+%license src/external/pcg-cpp/LICENSE-APACHE.txt LICENSE.pcg-cpp
+%license src/external/libigl/libigl/LICENSE.GPL LICENSE.libigl1
+%license src/external/libigl/libigl/LICENSE.MPL2 LICENSE.libigl2
+%license src/python_api/packages/LICENSE LICENSE.pyvsp
+%license src/python_api/packages/CHARM/LICENSE LICENSE.charm
+%license src/external/GeometricTools/GeometricTools/LICENSE LICENSE.geometrictools
 
 %files data
 %{_datadir}/openvsp/
