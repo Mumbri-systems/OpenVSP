@@ -130,17 +130,17 @@ find %{buildroot} -name ".keep" -delete
 popd
 
 #install bundled licenses
-%license Libraries/redhat-linux-build/CODEELI-prefix/LICENSE.txt LICENSE.code-eli
-%license Libraries/redhat-linux-build/EXPRPARSE-prefix/LICENSE LICENSE.exprparse
-%license Libraries/redhat-linux-build/LIBIGES-prefix/LICENSE LICENSE.libiges
-%license Libraries/redhat-linux-build/TRIANGLE-prefix/LICENSE LICENSE.triangle
+install -Dm644 Libraries/redhat-linux-build/CODEELI-prefix/LICENSE.txt %{buildroot}%{_licensedir}/%{name}/LICENSE.code-eli
+install -Dm644 Libraries/redhat-linux-build/EXPRPARSE-prefix/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.exprparse
+install -Dm644 Libraries/redhat-linux-build/LIBIGES-prefix/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.libiges
+install -Dm644 Libraries/redhat-linux-build/TRIANGLE-prefix/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.triangle
 #install secondary licenses
-%license src/external/pcg-cpp/LICENSE-APACHE.txt LICENSE.pcg-cpp
-%license src/external/libigl/libigl/LICENSE.GPL LICENSE.libigl1
-%license src/external/libigl/libigl/LICENSE.MPL2 LICENSE.libigl2
-%license src/python_api/packages/LICENSE LICENSE.pyvsp
-%license src/python_api/packages/CHARM/LICENSE LICENSE.charm
-%license src/external/GeometricTools/GeometricTools/LICENSE LICENSE.geometrictools
+install -Dm644 src/external/pcg-cpp/LICENSE-APACHE.txt %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.pcg-cpp
+install -Dm644 src/external/libigl/libigl/LICENSE.GPL %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.libigl1
+install -Dm644 src/external/libigl/libigl/LICENSE.MPL2 %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.libigl2
+install -Dm644 src/python_api/packages/LICENSE %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.pyvsp
+install -Dm644 src/python_api/packages/CHARM/LICENSE %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.charm
+install -Dm644 src/external/GeometricTools/GeometricTools/LICENSE %{buildroot}%{_defaultlicensedir}/%{name}/LICENSE.geometrictools
 
 %check
 pushd src
@@ -158,6 +158,7 @@ pushd src
 %{_datadir}/doc/VSP/
 %doc README.md
 %license LICENSE #main
+%license LICENSE.* #all others
 
 %files data
 %{_datadir}/openvsp/
