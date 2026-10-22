@@ -130,8 +130,6 @@ find %{buildroot} -name ".keep" -delete
 popd
 
 #install bundled licenses
-pwd
-ls Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/
 install -Dm644 Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/LICENSE.txt %{buildroot}%{_licensedir}/%{name}/LICENSE.code-eli
 install -Dm644 Libraries/redhat-linux-build/EXPRPARSE-prefix/src/EXPRPARSE/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.exprparse
 install -Dm644 Libraries/redhat-linux-build/LIBIGES-prefix/src/LIBIGES/LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE.libiges
@@ -159,8 +157,10 @@ pushd src
 %{_datadir}/openvsp/help/
 %{_datadir}/doc/VSP/
 %doc README.md
-%license LICENSE #main
-%license LICENSE.* #all others
+# main license
+%license LICENSE
+# all others
+%license LICENSE.*
 
 %files data
 %{_datadir}/openvsp/
