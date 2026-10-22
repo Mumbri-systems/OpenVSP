@@ -146,18 +146,18 @@ pushd src
 %doc README.md
 # main license
 %license LICENSE
-#install bundled licenses
-%license Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/LICENSE.txt LICENSE.code-eli
-%license Libraries/redhat-linux-build/EXPRPARSE-prefix/src/EXPRPARSE/LICENSE LICENSE.exprparse
-%license Libraries/redhat-linux-build/LIBIGES-prefix/src/LIBIGES/LICENSE LICENSE.libiges
-%license Libraries/redhat-linux-build/TRIANGLE-prefix/src/TRIANGLE/LICENSE LICENSE.triangle
-#install secondary licenses
-%license src/external/pcg-cpp/LICENSE-APACHE.txt LICENSE.pcg-cpp
-%license src/external/libigl/libigl/LICENSE.GPL LICENSE.libigl1
-%license src/external/libigl/libigl/LICENSE.MPL2 LICENSE.libigl2
-%license src/python_api/packages/LICENSE LICENSE.pyvsp
-%license src/python_api/packages/CHARM/LICENSE LICENSE.charm
-%license src/external/GeometricTools/GeometricTools/LICENSE LICENSE.geometrictools
+#install bundled licenses, renaming TODO
+# Libraries/redhat-linux-build/CODEELI-prefix/src/CODEELI/LICENSE.txt LICENSE.code-eli
+# Libraries/redhat-linux-build/EXPRPARSE-prefix/src/EXPRPARSE/LICENSE LICENSE.exprparse
+# Libraries/redhat-linux-build/LIBIGES-prefix/src/LIBIGES/LICENSE LICENSE.libiges
+# Libraries/redhat-linux-build/TRIANGLE-prefix/src/TRIANGLE/LICENSE LICENSE.triangle
+#install secondary licenses TODO
+# src/external/pcg-cpp/LICENSE-APACHE.txt LICENSE.pcg-cpp
+# src/external/libigl/libigl/LICENSE.GPL LICENSE.libigl1
+# src/external/libigl/libigl/LICENSE.MPL2 LICENSE.libigl2
+# src/python_api/packages/LICENSE LICENSE.pyvsp
+# src/python_api/packages/CHARM/LICENSE LICENSE.charm
+# src/external/GeometricTools/GeometricTools/LICENSE LICENSE.geometrictools
 
 %files data
 %{_datadir}/openvsp/
