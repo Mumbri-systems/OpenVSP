@@ -1,13 +1,10 @@
 %global _duplicate_files_terminate_build 0
-%global commit 5240ef210f41c5d6aeed0ba7687f6fab0ca0cafb
-%global shortcommit %(c=%{commit}; echo ${c:0:7})
-%global commitdate 20261012
-%global min_version 3.55.0
+%global min_version 3.56.0
 %global py_static_pkgs degen_geom utilities openvsp_config vsp_airfoils
 %global py_tools       CHARM AvlPy pyPMARC
 
 Name:     OpenVSP
-Version:  3.55.0
+Version:  3.56.0
 Release:  %autorelease
 Summary:  A parametric aircraft geometry tool
 # OpenVSP is a superproject containing many elements and source projects.  The main license is NASA-1.3
@@ -131,7 +128,7 @@ popd
 
 %check
 pushd src
-%ctest --exclude-regex "PyTest|PySampleCodeTest|ScriptSampleCodeTest|AnalysisVSPAERO|PyDegenGeomTest"
+%ctest --exclude-regex "PyTest|PySampleCodeTest|PyDegenGeomTest"
 #excluded tests seem to fail for non-relevant reasons
 
 %files
